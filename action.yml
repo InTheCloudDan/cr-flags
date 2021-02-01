@@ -1,6 +1,6 @@
 # action.yml
 name: 'Find Flags'
-description: 'Greet someone and record the time'
+description: 'Test find flags'
 runs:
   using: 'docker'
   image: 'Dockerfile'

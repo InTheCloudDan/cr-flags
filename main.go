@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	fmt.Println("Output Stuff")
 	dir := os.Getenv("GITHUB_WORKSPACE")
 	fmt.Println(dir)
 
