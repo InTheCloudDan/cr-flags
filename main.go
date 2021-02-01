@@ -32,6 +32,7 @@ func parseEvent(path string) (*github.Event, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(eventJsonBytes)
 	var evt github.Event
 	err = json.Unmarshal(eventJsonBytes, &evt)
 	if err != nil {
