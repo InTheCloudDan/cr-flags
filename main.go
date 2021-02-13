@@ -21,7 +21,7 @@ func main() {
 	fmt.Println(event)
 }
 
-func parseEvent(path string) (github.Event, error) {
+func parseEvent(path string) (*github.Event, error) {
 	/* #nosec */
 	eventJsonFile, err := os.Open(path)
 	if err != nil {
@@ -39,5 +39,5 @@ func parseEvent(path string) (github.Event, error) {
 		return nil, err
 	}
 	fmt.Println(evt)
-	return evt, err
+	return &evt, err
 }
