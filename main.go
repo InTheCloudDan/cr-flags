@@ -25,7 +25,7 @@ func main() {
 	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
 	repo := os.Getenv("GITHUB_REPO")
 
-	prService := github.PullRequestsService(*client.PullRequests)
+	prService := client.PullRequests
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, gh, err := prService.GetRaw(ctx, owner, repo, *event.PullRequest.Number, rawOpts)
 	fmt.Println(gh)
