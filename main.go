@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/google/go-github/github"
 )
@@ -23,12 +24,12 @@ func main() {
 	client := github.NewClient(nil)
 	ctx := context.Background()
 	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
-	repo := os.Getenv("GITHUB_REPOSITORY")
+	repo := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 	fmt.Println(owner)
 	fmt.Println(repo)
 	prService := client.PullRequests
 	rawOpts := github.RawOptions{Type: github.Diff}
-	raw, gh, err := prService.GetRaw(ctx, owner, repo, *event.PullRequest.Number, rawOpts)
+	raw, gh, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
 	fmt.Println(gh)
 	if err != nil {
 		fmt.Println(err)
