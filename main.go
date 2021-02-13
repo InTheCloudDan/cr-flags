@@ -73,7 +73,6 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	flags.Items[0].Environments["test"].Site.Href
 	for _, flag := range flagsAdded {
 		idx, found := find(flags.Items, flag)
 		fmt.Println(idx)
