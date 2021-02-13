@@ -11,6 +11,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/antihax/optional"
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
 	"golang.org/x/oauth2"
@@ -37,7 +38,10 @@ func main() {
 		fmt.Println(err)
 	}
 	projectKey := "support-service"
-	flags, _, err := ldClient.ld.FeatureFlagsApi.GetFeatureFlags(ldClient.ctx, projectKey, nil)
+	flagOpts := ldapi.GetFeatureFlagsOpts{
+		Env: optional.NewInterface("dano"),
+	}
+	flags, _, err := ldClient.ld.FeatureFlagsApi.GetFeatureFlags(ldClient.ctx, projectKey, &flagOpts)
 	if err != nil {
 		fmt.Println(err)
 	}
