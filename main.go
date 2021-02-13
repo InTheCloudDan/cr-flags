@@ -75,7 +75,8 @@ func main() {
 	comment := github.PullRequestComment{
 		Body: &commentStr,
 	}
-	ghComment, _, err := prService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
+	ghComment, ghResp, err := prService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
+	fmt.Println(ghResp)
 	if err != nil {
 		fmt.Println(err)
 	}
