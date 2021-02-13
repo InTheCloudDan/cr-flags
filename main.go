@@ -81,6 +81,10 @@ func main() {
 		idx := sort.Search(len(flags.Items), func(i int) bool {
 			return flags.Items[i].Key >= flag
 		})
+		fmt.Println(idx)
+		if flags.Items[idx].Key != flag {
+			continue
+		}
 		var commentBody bytes.Buffer
 		tmplSetup := `
 Name: **{{.Name}}**
