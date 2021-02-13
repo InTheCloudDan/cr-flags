@@ -29,12 +29,20 @@ func main() {
 	fmt.Println(repo)
 	prService := client.PullRequests
 	rawOpts := github.RawOptions{Type: github.Diff}
-	raw, gh, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
-	fmt.Println(gh)
+	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
+	diffRows := strings.Split(raw, "\n")
+	for _, row := range diffRows {
+		if strings.HasPrefix(row, "+") {
+			fmt.Println("Adding Line")
+		} else if strings.HasPrefix(row, "-") {
+			fmt.Println("Removing Line")
+		}
+	}
+	//fmt.Println(gh)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(raw)
+	//fmt.Println(raw)
 }
 
 func parseEvent(path string) (*github.PullRequestEvent, error) {
