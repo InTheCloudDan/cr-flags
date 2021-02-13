@@ -53,6 +53,7 @@ func main() {
 		if strings.HasPrefix(row, "+") {
 			for _, flag := range flags.Items {
 				if strings.Contains(row, flag.Key) {
+					fmt.Println(flag.Key)
 					fmt.Println("FLAG FOUND")
 				}
 			}
