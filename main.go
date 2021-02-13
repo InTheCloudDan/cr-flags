@@ -21,7 +21,7 @@ func main() {
 	fmt.Println(event)
 }
 
-func parseEvent(path string) (*github.Event, error) {
+func parseEvent(path string) (*github.PullRequestEvent, error) {
 	/* #nosec */
 	eventJsonFile, err := os.Open(path)
 	if err != nil {
@@ -32,8 +32,8 @@ func parseEvent(path string) (*github.Event, error) {
 	if err != nil {
 		return nil, err
 	}
-	//fmt.Println(string(eventJsonBytes))
-	var evt github.Event
+	fmt.Println(string(eventJsonBytes))
+	var evt github.PullRequestEvent
 	err = json.Unmarshal(eventJsonBytes, &evt)
 	if err != nil {
 		return nil, err
