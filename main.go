@@ -32,12 +32,12 @@ func parseEvent(path string) (*github.PullRequestEvent, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(eventJsonBytes))
+	//fmt.Println(string(eventJsonBytes))
 	var evt github.PullRequestEvent
 	err = json.Unmarshal(eventJsonBytes, &evt)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(evt)
+	//fmt.Println(evt)
 	return &evt, err
 }
