@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -8,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"text/template"
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
@@ -67,6 +69,15 @@ func main() {
 		fmt.Println(err)
 	}
 	//fmt.Println(raw)
+	var commentBody bytes.Buffer
+	tmpl, err := template.New("test").Parse("{{.Key}} {{.Description}}")
+	err = tmpl.Execute(&commentBody, flags.Items[0])
+	commentStr := commentBody.String()
+	comment := github.PullRequestComment{
+		Body: &commentStr,
+	}
+	ghComment, _, err := prService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
+	fmt.Println(ghComment)
 }
 
 func parseEvent(path string) (*github.PullRequestEvent, error) {
