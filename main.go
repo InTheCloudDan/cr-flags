@@ -38,5 +38,6 @@ func parseEvent(path string) (*github.Event, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(*evt)
 	return &evt, err
 }
