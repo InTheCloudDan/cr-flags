@@ -59,10 +59,8 @@ func main() {
 					fmt.Println("FLAG FOUND")
 				}
 			}
-			fmt.Println("Adding Line")
-		} else if strings.HasPrefix(row, "-") {
-			fmt.Println("Removing Line")
-		}
+		} //else if strings.HasPrefix(row, "-") {
+		//}
 	}
 	//fmt.Println(gh)
 	if err != nil {
@@ -73,10 +71,14 @@ func main() {
 	tmpl, err := template.New("test").Parse("{{.Key}} {{.Description}}")
 	err = tmpl.Execute(&commentBody, flags.Items[0])
 	commentStr := commentBody.String()
+	fmt.Println(commentStr)
 	comment := github.PullRequestComment{
 		Body: &commentStr,
 	}
 	ghComment, _, err := prService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
+	if err != nil {
+		fmt.Println(err)
+	}
 	fmt.Println(ghComment)
 }
 
