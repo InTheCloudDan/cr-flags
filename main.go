@@ -47,6 +47,7 @@ func main() {
 	fmt.Println(owner)
 	fmt.Println(repo)
 	prService := client.PullRequests
+	issuesService := client.Issues
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
 	diffRows := strings.Split(raw, "\n")
@@ -72,10 +73,10 @@ func main() {
 	err = tmpl.Execute(&commentBody, flags.Items[0])
 	commentStr := commentBody.String()
 	fmt.Println(commentStr)
-	comment := github.PullRequestComment{
+	comment := github.IssueComment{
 		Body: &commentStr,
 	}
-	ghComment, ghResp, err := prService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
+	ghComment, ghResp, err := issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
 	fmt.Println(ghResp)
 	if err != nil {
 		fmt.Println(err)
