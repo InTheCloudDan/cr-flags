@@ -20,7 +20,7 @@ func main() {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
 	}
 	fmt.Println(event)
-	client := github.Client{}
+	client := github.NewClient(nil)
 	ctx := context.Background()
 	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
 	repo := os.Getenv("GITHUB_REPO")
