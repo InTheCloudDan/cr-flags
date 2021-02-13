@@ -4,10 +4,9 @@ jobs:
   hello_world_job:
     runs-on: ubuntu-latest
     name: Test Find Flags
+    environment:
+      name: Test
     steps:
-
-      # To use this repository's private action,
-      # you must check out the repository
       - name: Checkout
         uses: actions/checkout@v2
       - name: Hello world action step
@@ -15,4 +14,3 @@ jobs:
         id: find_flags
         env:
           LAUNCHDARKLY_ACCESS_TOKEN: ${{ secrets.LAUNCHDARKLY_ACCESS_TOKEN }}
-      # Use the output from the `hello` step
