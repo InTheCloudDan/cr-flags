@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -58,11 +59,12 @@ func main() {
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
 	diffRows := strings.Split(raw, "\n")
 	// chatbox
+	var flagsAdded []string
 	for _, row := range diffRows {
 		if strings.HasPrefix(row, "+") {
 			for _, flag := range flags.Items {
 				if strings.Contains(row, flag.Key) {
-					fmt.Println(flag.Key)
+					flagsAdded = append(flagsAdded, flag.Key)
 					fmt.Println("FLAG FOUND")
 				}
 			}
@@ -74,26 +76,33 @@ func main() {
 		fmt.Println(err)
 	}
 	//fmt.Println(raw)
-	var commentBody bytes.Buffer
-	tmplSetup := `
+
+	for _, flag := range flagsAdded {
+		idx := sort.Search(len(flags.Items), func(i int) bool {
+			return string(flags.Items[i].Key) == flag
+		})
+		var commentBody bytes.Buffer
+		tmplSetup := `
 Name: **{{.Name}}**
 Key: {{.Key}}
 {{.Description}}
 Tags: *{{.Tags}}
 `
-	tmpl, err := template.New("test").Parse(tmplSetup)
-	err = tmpl.Execute(&commentBody, flags.Items[0])
-	commentStr := commentBody.String()
-	fmt.Println(commentStr)
-	comment := github.IssueComment{
-		Body: &commentStr,
+		tmpl, err := template.New("comment").Parse(tmplSetup)
+		err = tmpl.Execute(&commentBody, flags.Items[idx])
+		commentStr := commentBody.String()
+		fmt.Println(commentStr)
+		comment := github.IssueComment{
+			Body: &commentStr,
+		}
+		ghComment, ghResp, err := issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
+		fmt.Println(ghResp)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(ghComment)
 	}
-	ghComment, ghResp, err := issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
-	fmt.Println(ghResp)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(ghComment)
+
 }
 
 func parseEvent(path string) (*github.PullRequestEvent, error) {

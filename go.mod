@@ -7,5 +7,5 @@ require (
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/launchdarkly/api-client-go v5.0.0+incompatible
-	golang.org/x/oauth2 v0.0.0-20210210192628-66670185b0cd // indirect
+	golang.org/x/oauth2 v0.0.0-20210210192628-66670185b0cd
 )
