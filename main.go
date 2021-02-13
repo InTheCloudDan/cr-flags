@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 
 	"github.com/google/go-github/github"
+	ldapi "github.com/launchdarkly/api-client-go"
 )
 
 func main() {
@@ -21,6 +23,21 @@ func main() {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
 	}
 	//fmt.Println(event)
+	apiToken := os.Getenv("LAUNCHDARKLY_ACCESS_TOKEN")
+	if apiToken == "" {
+		fmt.Println("LAUNCHDARKLY_ACCESS_TOKEN is not set.")
+		os.Exit(1)
+	}
+
+	ldClient, err := newClient(apiToken, "https://app.launchdarkly.com", false)
+	if err != nil {
+		fmt.Println(err)
+	}
+	projectKey := "support-service"
+	flags, _, err := ldClient.ld.FeatureFlagsApi.GetFeatureFlags(ldClient.ctx, projectKey, nil)
+	if err != nil {
+		fmt.Println(err)
+	}
 	client := github.NewClient(nil)
 	ctx := context.Background()
 	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
@@ -31,8 +48,14 @@ func main() {
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
 	diffRows := strings.Split(raw, "\n")
+	// chatbox
 	for _, row := range diffRows {
 		if strings.HasPrefix(row, "+") {
+			for _, flag := range flags.Items {
+				if strings.Contains(row, flag.Key) {
+					fmt.Println("FLAG FOUND")
+				}
+			}
 			fmt.Println("Adding Line")
 		} else if strings.HasPrefix(row, "-") {
 			fmt.Println("Removing Line")
@@ -64,4 +87,47 @@ func parseEvent(path string) (*github.PullRequestEvent, error) {
 	}
 	//fmt.Println(evt)
 	return &evt, err
+}
+
+type Client struct {
+	apiKey  string
+	apiHost string
+	ld      *ldapi.APIClient
+	ctx     context.Context
+}
+
+const (
+	APIVersion = "20191212"
+)
+
+func newClient(token string, apiHost string, oauth bool) (*Client, error) {
+	if token == "" {
+		return nil, errors.New("token cannot be empty")
+	}
+	basePath := "https://app.launchdarkly.com/api/v2"
+	if apiHost != "" {
+		basePath = fmt.Sprintf("%s/api/v2", apiHost)
+	}
+
+	cfg := &ldapi.Configuration{
+		BasePath:      basePath,
+		DefaultHeader: make(map[string]string),
+		UserAgent:     fmt.Sprintf("launchdarkly-terraform-provider/0.1.0"),
+	}
+
+	cfg.AddDefaultHeader("LD-API-Version", APIVersion)
+
+	ctx := context.WithValue(context.Background(), ldapi.ContextAPIKey, ldapi.APIKey{
+		Key: token,
+	})
+	if oauth {
+		ctx = context.WithValue(context.Background(), ldapi.ContextAccessToken, token)
+	}
+
+	return &Client{
+		apiKey:  token,
+		apiHost: apiHost,
+		ld:      ldapi.NewAPIClient(cfg),
+		ctx:     ctx,
+	}, nil
 }
