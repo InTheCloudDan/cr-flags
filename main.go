@@ -70,11 +70,10 @@ func main() {
 		} //else if strings.HasPrefix(row, "-") {
 		//}
 	}
-	//fmt.Println(gh)
 	if err != nil {
 		fmt.Println(err)
 	}
-	//fmt.Println(raw)
+	flags.Items[0].Environments["test"].Site.Href
 	for _, flag := range flagsAdded {
 		idx, found := find(flags.Items, flag)
 		fmt.Println(idx)
@@ -88,7 +87,8 @@ Name: **{{.Name}}**
 Key: {{.Key}}
 {{.Description}}
 Tags: {{range $tag := .Tags }}*{{$tag}}* {{end}}
-[Open in Browser](https://app.launchdarkly.com/{{.Links.Self.Href}})
+Off Variation: {{.Environments["dano"].offVariation}}
+[Open in Browser](https://app.launchdarkly.com{{.Environments["dano"].Site.Href}})
 `
 		tmpl, err := template.New("comment").Parse(tmplSetup)
 		err = tmpl.Execute(&commentBody, flags.Items[idx])
