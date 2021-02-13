@@ -80,6 +80,7 @@ func main() {
 	for _, flag := range flagsAdded {
 		idx, found := find(flags.Items, flag)
 		fmt.Println(idx)
+		fmt.Println(flags.Items[idx].Environments["dano"])
 		fmt.Println(found)
 		if flags.Items[idx].Key != flag {
 			continue
@@ -90,7 +91,7 @@ Name: **{{.Name}}**
 Key: {{.Key}}
 {{.Description}}
 Tags: {{range $tag := .Tags }}*{{$tag}}* {{end}}
-Off Variation: {{.Environments.dano.offVariation}}
+Off Variation: {{.Environments.dano.OffVariation}}
 [Open in Browser](https://app.launchdarkly.com{{.Environments.dano.Site.Href}})
 `
 		tmpl, err := template.New("comment").Parse(tmplSetup)
