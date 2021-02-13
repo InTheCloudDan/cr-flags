@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	"golang.org/x/oauth2"
 )
 
 func main() {
@@ -40,8 +41,13 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	client := github.NewClient(nil)
 	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	client := github.NewClient(tc)
 	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
 	repo := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 	fmt.Println(owner)
