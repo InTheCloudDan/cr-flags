@@ -75,7 +75,6 @@ func main() {
 		fmt.Println(err)
 	}
 	//fmt.Println(raw)
-
 	for _, flag := range flagsAdded {
 		idx, found := find(flags.Items, flag)
 		fmt.Println(idx)
@@ -88,7 +87,8 @@ func main() {
 Name: **{{.Name}}**
 Key: {{.Key}}
 {{.Description}}
-Tags: *{{.Tags}}
+Tags: {{range $tag := .Tags }}*{{$tag}}* {{end}}
+[Open in Browser](https://app.launchdarkly.com/{{.Links.Self.Href}})
 `
 		tmpl, err := template.New("comment").Parse(tmplSetup)
 		err = tmpl.Execute(&commentBody, flags.Items[idx])
