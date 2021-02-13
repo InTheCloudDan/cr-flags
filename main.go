@@ -23,7 +23,7 @@ func main() {
 	client := github.NewClient(nil)
 	ctx := context.Background()
 	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
-	repo := os.Getenv("GITHUB_REPO")
+	repo := os.Getenv("GITHUB_REPOSITORY")
 
 	prService := client.PullRequests
 	rawOpts := github.RawOptions{Type: github.Diff}
