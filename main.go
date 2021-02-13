@@ -19,12 +19,13 @@ func main() {
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
 	}
-	fmt.Println(event)
+	//fmt.Println(event)
 	client := github.NewClient(nil)
 	ctx := context.Background()
 	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
 	repo := os.Getenv("GITHUB_REPOSITORY")
-
+	fmt.Println(owner)
+	fmt.Println(repo)
 	prService := client.PullRequests
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, gh, err := prService.GetRaw(ctx, owner, repo, *event.PullRequest.Number, rawOpts)
