@@ -75,7 +75,13 @@ func main() {
 	}
 	//fmt.Println(raw)
 	var commentBody bytes.Buffer
-	tmpl, err := template.New("test").Parse("{{.Key}} {{.Description}}")
+	tmplSetup := `
+Name: **{{.Name}}**
+Key: {{.Key}}
+{{.Description}}
+Tags: *{{.Tags}}
+`
+	tmpl, err := template.New("test").Parse(tmplSetup)
 	err = tmpl.Execute(&commentBody, flags.Items[0])
 	commentStr := commentBody.String()
 	fmt.Println(commentStr)
