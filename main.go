@@ -18,10 +18,10 @@ func main() {
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
 	}
-	fmt.Println(*event)
+	fmt.Println(event)
 }
 
-func parseEvent(path string) (*github.Event, error) {
+func parseEvent(path string) (github.Event, error) {
 	/* #nosec */
 	eventJsonFile, err := os.Open(path)
 	if err != nil {
@@ -38,6 +38,6 @@ func parseEvent(path string) (*github.Event, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(*evt)
-	return &evt, err
+	fmt.Println(evt)
+	return evt, err
 }
