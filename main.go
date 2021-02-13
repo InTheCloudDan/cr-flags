@@ -79,7 +79,7 @@ func main() {
 
 	for _, flag := range flagsAdded {
 		idx := sort.Search(len(flags.Items), func(i int) bool {
-			return string(flags.Items[i].Key) == flag
+			return flags.Items[i].Key >= flag
 		})
 		var commentBody bytes.Buffer
 		tmplSetup := `
