@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"sort"
 	"strings"
 	"text/template"
 
@@ -78,10 +77,9 @@ func main() {
 	//fmt.Println(raw)
 
 	for _, flag := range flagsAdded {
-		idx := sort.Search(len(flags.Items), func(i int) bool {
-			return flags.Items[i].Key >= flag
-		})
+		idx, found := find(flags.Items, flag)
 		fmt.Println(idx)
+		fmt.Println(found)
 		if flags.Items[idx].Key != flag {
 			continue
 		}
@@ -171,4 +169,13 @@ func newClient(token string, apiHost string, oauth bool) (*Client, error) {
 		ld:      ldapi.NewAPIClient(cfg),
 		ctx:     ctx,
 	}, nil
+}
+
+func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
+	for i, item := range slice {
+		if item.Key == val {
+			return i, true
+		}
+	}
+	return -1, false
 }
