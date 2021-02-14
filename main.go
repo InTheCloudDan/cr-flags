@@ -18,15 +18,10 @@ import (
 )
 
 func main() {
-	fmt.Println("Output Stuff")
-	dir := os.Getenv("GITHUB_WORKSPACE")
-	fmt.Println(dir)
-
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
 	}
-	//fmt.Println(event)
 	apiToken := os.Getenv("LAUNCHDARKLY_ACCESS_TOKEN")
 	if apiToken == "" {
 		fmt.Println("LAUNCHDARKLY_ACCESS_TOKEN is not set.")
@@ -52,10 +47,9 @@ func main() {
 	tc := oauth2.NewClient(ctx, ts)
 
 	client := github.NewClient(tc)
+
 	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
 	repo := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
-	fmt.Println(owner)
-	fmt.Println(repo)
 	prService := client.PullRequests
 	issuesService := client.Issues
 	rawOpts := github.RawOptions{Type: github.Diff}
@@ -71,8 +65,7 @@ func main() {
 					fmt.Println("FLAG FOUND")
 				}
 			}
-		} //else if strings.HasPrefix(row, "-") {
-		//}
+		}
 	}
 	if err != nil {
 		fmt.Println(err)
@@ -122,13 +115,11 @@ func parseEvent(path string) (*github.PullRequestEvent, error) {
 	if err != nil {
 		return nil, err
 	}
-	//fmt.Println(string(eventJsonBytes))
 	var evt github.PullRequestEvent
 	err = json.Unmarshal(eventJsonBytes, &evt)
 	if err != nil {
 		return nil, err
 	}
-	//fmt.Println(evt)
 	return &evt, err
 }
 
