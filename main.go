@@ -192,13 +192,13 @@ func githubComment(flags []ldapi.FeatureFlag, flag string, environment string) (
 	var commentBody bytes.Buffer
 	tmplSetup := `
 Flag details: **[{{.Flag.Name}}](https://app.launchdarkly.com{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
-*{{.flag.Description}}*
-Tags: {{range $tag := .flag.Tags }}_{{$tag}}_ {{end}}
+*{{.Flag.Description}}*
+Tags: {{range $tag := .Flag.Tags }}_{{$tag}}_ {{end}}
 
 Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
 Off variation: ` + "`" + `{{(index .Flag.Variations .Environment.OffVariation).Value}}` + "`" + `
-Kind: **{{ .flag.Kind }}**
-Temporary: **{{ .flag.Temporary }}**
+Kind: **{{ .Flag.Kind }}**
+Temporary: **{{ .Flag.Temporary }}**
 `
 	tmpl, err := template.New("comment").Parse(tmplSetup)
 	if err != nil {
