@@ -84,7 +84,7 @@ Name: **{{.Name}}**
 Key: {{.Key}}
 {{.Description}}
 Tags: {{range $tag := .Tags }}*{{$tag}}* {{end}}
-Default variation: ` + "`" + `{{(index .Variations .Environments.dano.Fallthrough_Variation).Value}}` + "`" + `
+Default variation: ` + "`" + `{{(index .Variations .Environments.dano.Fallthrough_.Variation).Value}}` + "`" + `
 Off variation: ` + "`" + `{{(index .Variations .Environments.dano.OffVariation).Value}}` + "`" + `
 [Open in Browser](https://app.launchdarkly.com{{.Environments.dano.Site.Href}})
 `
