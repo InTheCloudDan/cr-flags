@@ -18,6 +18,14 @@ import (
 )
 
 func main() {
+	ldProject := os.Getenv("INPUT_PROJECT")
+	if ldProject == "" {
+		fmt.Println("`project` is required.")
+	}
+	ldEnvironment := os.Getenv("INPUT_ENVIRONMENT")
+	if ldEnvironment == "" {
+		fmt.Println("`environment` is required.")
+	}
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
@@ -32,12 +40,11 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	projectKey := "support-service"
 	flagOpts := ldapi.GetFeatureFlagsOpts{
-		Env:     optional.NewInterface("dano"),
+		Env:     optional.NewInterface(ldEnvironment),
 		Summary: optional.NewBool(false),
 	}
-	flags, _, err := ldClient.ld.FeatureFlagsApi.GetFeatureFlags(ldClient.ctx, projectKey, &flagOpts)
+	flags, _, err := ldClient.ld.FeatureFlagsApi.GetFeatureFlags(ldClient.ctx, ldProject, &flagOpts)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -58,12 +65,18 @@ func main() {
 	diffRows := strings.Split(raw, "\n")
 	// chatbox
 	var flagsAdded []string
+	var flagsRemoved []string
 	for _, row := range diffRows {
 		if strings.HasPrefix(row, "+") {
 			for _, flag := range flags.Items {
 				if strings.Contains(row, flag.Key) {
 					flagsAdded = append(flagsAdded, flag.Key)
-					fmt.Println("FLAG FOUND")
+				}
+			}
+		} else if strings.HasPrefix(row, "-") {
+			for _, flag := range flags.Items {
+				if strings.Contains(row, flag.Key) {
+					flagsRemoved = append(flagsAdded, flag.Key)
 				}
 			}
 		}
@@ -72,30 +85,24 @@ func main() {
 		fmt.Println(err)
 	}
 	for _, flag := range flagsAdded {
-		idx, _ := find(flags.Items, flag)
-		var commentBody bytes.Buffer
-		tmplSetup := `
-Flag details: **[{{.Name}}](https://app.launchdarkly.com{{.Environments.dano.Site.Href}})** ` + "`" + `{{.Key}}` + "`" + `
-*{{.Description}}*
-Tags: {{range $tag := .Tags }}_{{$tag}}_ {{end}}
-Default variation: ` + "`" + `{{(index .Variations .Environments.dano.Fallthrough_.Variation).Value}}` + "`" + `
-Off variation: ` + "`" + `{{(index .Variations .Environments.dano.OffVariation).Value}}` + "`" + `
-Kind: **{{ .Kind }}**
-Temporary: **{{ .Temporary }}**
-`
-		tmpl, err := template.New("comment").Parse(tmplSetup)
-		err = tmpl.Execute(&commentBody, flags.Items[idx])
-		commentStr := commentBody.String()
-		fmt.Println(commentStr)
-		comment := github.IssueComment{
-			Body: &commentStr,
-		}
-		ghComment, ghResp, err := issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
-		fmt.Println(ghResp)
+		createComment, err := githubComment(flags.Items, flag, ldEnvironment)
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Println(ghComment)
+		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	for _, flag := range flagsRemoved {
+		createComment, err := githubComment(flags.Items, flag)
+		if err != nil {
+			fmt.Println(err)
+		}
+		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 }
@@ -169,4 +176,34 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 		}
 	}
 	return -1, false
+}
+
+func githubComment(flags []ldapi.FeatureFlag, flag string, environment string) (*github.IssueComment, error) {
+	idx, _ := find(flags, flag)
+	commentTemplate := map[string]interface{}{
+		flag:        flags[idx],
+		environment: flags[idx].Environments[environment],
+	}
+	var commentBody bytes.Buffer
+	tmplSetup := `
+Flag details: **[{{.Name}}](https://app.launchdarkly.com{{.Environments.dano.Site.Href}})** ` + "`" + `{{.Key}}` + "`" + `
+*{{.Description}}*
+Tags: {{range $tag := .flag.Tags }}_{{$tag}}_ {{end}}
+
+Default variation: ` + "`" + `{{(index .flag.Variations .environment.Fallthrough_.Variation).Value}}` + "`" + `
+Off variation: ` + "`" + `{{(index .flag.Variations .environment.OffVariation).Value}}` + "`" + `
+Kind: **{{ .flag.Kind }}**
+Temporary: **{{ .flag.Temporary }}**
+`
+	tmpl, err := template.New("comment").Parse(tmplSetup)
+	if err != nil {
+		return nil, err
+	}
+	err = tmpl.Execute(&commentBody, commentTemplate)
+	commentStr := commentBody.String()
+	fmt.Println(commentStr)
+	comment := github.IssueComment{
+		Body: &commentStr,
+	}
+	return &comment, nil
 }

@@ -12,6 +12,9 @@ jobs:
       - name: Hello world action step
         uses: ./ # Uses an action in the root directory
         id: find_flags
+        with:
+          project: support-service
+          environment: dano
         env:
           LAUNCHDARKLY_ACCESS_TOKEN: ${{ secrets.LAUNCHDARKLY_ACCESS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
