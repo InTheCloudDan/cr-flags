@@ -186,8 +186,8 @@ func githubComment(flags []ldapi.FeatureFlag, flag string, environment string) (
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-Flag details: **[{{.Name}}](https://app.launchdarkly.com{{.Environments.dano.Site.Href}})** ` + "`" + `{{.Key}}` + "`" + `
-*{{.Description}}*
+Flag details: **[{{.flag.Name}}](https://app.launchdarkly.com{{.environments.Site.Href}})** ` + "`" + `{{.flag.Key}}` + "`" + `
+*{{.flag.Description}}*
 Tags: {{range $tag := .flag.Tags }}_{{$tag}}_ {{end}}
 
 Default variation: ` + "`" + `{{(index .flag.Variations .environment.Fallthrough_.Variation).Value}}` + "`" + `
