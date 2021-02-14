@@ -84,8 +84,9 @@ Name: **{{.Name}}**
 Key: {{.Key}}
 {{.Description}}
 Tags: {{range $tag := .Tags }}*{{$tag}}* {{end}}
-off variation: ` + "`" + `{{(index .Variations .Environments.dano.OffVariation).Value}}` + "`" +
-			`[Open in Browser](https://app.launchdarkly.com{{.Environments.dano.Site.Href}})
+Default variation: ` + "`" + `{{(index .Variations .Environments.dano.Fallthrough_Variation).Value}}` + "`" + `
+Off variation: ` + "`" + `{{(index .Variations .Environments.dano.OffVariation).Value}}` + "`" + `
+[Open in Browser](https://app.launchdarkly.com{{.Environments.dano.Site.Href}})
 `
 		tmpl, err := template.New("comment").Parse(tmplSetup)
 		err = tmpl.Execute(&commentBody, flags.Items[idx])
