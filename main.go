@@ -34,7 +34,8 @@ func main() {
 	}
 	projectKey := "support-service"
 	flagOpts := ldapi.GetFeatureFlagsOpts{
-		Env: optional.NewInterface("dano"),
+		Env:     optional.NewInterface("dano"),
+		Summary: optional.NewBool(false),
 	}
 	flags, _, err := ldClient.ld.FeatureFlagsApi.GetFeatureFlags(ldClient.ctx, projectKey, &flagOpts)
 	if err != nil {
