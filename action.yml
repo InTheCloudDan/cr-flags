@@ -13,3 +13,7 @@ inputs:
     description: 'LaunchDarkly Environment for Project'
     required: true
     default: 'prod'
+  instance:
+    description: 'LaunchDarkly Instance'
+    required: no
+    default: 'https://app.launchdarkly.com'

@@ -26,6 +26,13 @@ func main() {
 	if ldEnvironment == "" {
 		fmt.Println("`environment` is required.")
 	}
+	ldInstance := os.Getenv("INPUT_INSTANCE")
+	if ldEnvironment == "" {
+		fmt.Println("`instance` is required.")
+	}
+	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
+	repo := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
@@ -36,6 +43,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Query for flags
 	ldClient, err := newClient(apiToken, "https://app.launchdarkly.com", false)
 	if err != nil {
 		fmt.Println(err)
@@ -48,18 +56,16 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
 	)
 	tc := oauth2.NewClient(ctx, ts)
-
 	client := github.NewClient(tc)
-
-	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
-	repo := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 	prService := client.PullRequests
 	issuesService := client.Issues
+
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
 	diffRows := strings.Split(raw, "\n")
@@ -84,8 +90,9 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	for _, flag := range flagsAdded {
-		createComment, err := githubComment(flags.Items, flag, ldEnvironment)
+		createComment, err := githubComment(flags.Items, flag, ldEnvironment, ldInstance)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -95,7 +102,7 @@ func main() {
 		}
 	}
 	for _, flag := range flagsRemoved {
-		createComment, err := githubComment(flags.Items, flag, ldEnvironment)
+		createComment, err := githubComment(flags.Items, flag, ldEnvironment, ldInstance)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -104,7 +111,6 @@ func main() {
 			fmt.Println(err)
 		}
 	}
-
 }
 
 func parseEvent(path string) (*github.PullRequestEvent, error) {
@@ -181,17 +187,19 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 type Comment struct {
 	Flag        ldapi.FeatureFlag
 	Environment ldapi.FeatureFlagConfig
+	LDInstance  string
 }
 
-func githubComment(flags []ldapi.FeatureFlag, flag string, environment string) (*github.IssueComment, error) {
+func githubComment(flags []ldapi.FeatureFlag, flag string, environment string, instance string) (*github.IssueComment, error) {
 	idx, _ := find(flags, flag)
 	commentTemplate := Comment{
 		Flag:        flags[idx],
 		Environment: flags[idx].Environments[environment],
+		LDInstance:  instance,
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-Flag details: **[{{.Flag.Name}}](https://app.launchdarkly.com{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
+Flag details: **[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 *{{.Flag.Description}}*
 Tags: {{range $tag := .Flag.Tags }}_{{$tag}}_ {{end}}
 
