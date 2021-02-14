@@ -75,7 +75,7 @@ func main() {
 		fmt.Println(idx)
 		fmt.Println(flags.Items[idx].Environments["dano"])
 		fmt.Println("Variation")
-		fmt.Println(flags.Items[idx].Environments["dano"].Fallthrough_.Variation)
+		fmt.Println(flags.Items[idx].Environments["dano"].Fallthrough_)
 		if flags.Items[idx].Key != flag {
 			continue
 		}
