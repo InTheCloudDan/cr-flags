@@ -95,7 +95,7 @@ func main() {
 		}
 	}
 	for _, flag := range flagsRemoved {
-		createComment, err := githubComment(flags.Items, flag)
+		createComment, err := githubComment(flags.Items, flag, ldEnvironment)
 		if err != nil {
 			fmt.Println(err)
 		}
