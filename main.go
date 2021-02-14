@@ -82,13 +82,14 @@ func main() {
 		}
 		var commentBody bytes.Buffer
 		tmplSetup := `
-Name: **{{.Name}}**
-Key: {{.Key}}
-{{.Description}}
-Tags: {{range $tag := .Tags }}*{{$tag}}* {{end}}
+Flag details: **[{{.Name}}](https://app.launchdarkly.com{{.Environments.dano.Site.Href}})** {{.Key}}
+*{{.Description}}*
+Tags: {{range $tag := .Tags }}_{{$tag}}_ {{end}}
 Default variation: ` + "`" + `{{(index .Variations .Environments.dano.Fallthrough_.Variation).Value}}` + "`" + `
 Off variation: ` + "`" + `{{(index .Variations .Environments.dano.OffVariation).Value}}` + "`" + `
-[Open in Browser](https://app.launchdarkly.com{{.Environments.dano.Site.Href}})
+Kind: **{{ .Kind }}**
+Temporary: **{{ .Temporary }}**
+[Open in Browser]
 `
 		tmpl, err := template.New("comment").Parse(tmplSetup)
 		err = tmpl.Execute(&commentBody, flags.Items[idx])
