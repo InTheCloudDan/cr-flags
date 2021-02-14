@@ -91,7 +91,6 @@ Name: **{{.Name}}**
 Key: {{.Key}}
 {{.Description}}
 Tags: {{range $tag := .Tags }}*{{$tag}}* {{end}}
-{{$offVar =  }}
 Off Variation: {{(index .Variations .Environments.dano.OffVariation).Value}}
 [Open in Browser](https://app.launchdarkly.com{{.Environments.dano.Site.Href}})
 `
