@@ -71,10 +71,11 @@ func main() {
 		fmt.Println(err)
 	}
 	for _, flag := range flagsAdded {
-		idx, found := find(flags.Items, flag)
+		idx, _ := find(flags.Items, flag)
 		fmt.Println(idx)
 		fmt.Println(flags.Items[idx].Environments["dano"])
-		fmt.Println(found)
+		fmt.Println("Variation")
+		fmt.Println(flags.Items[idx].Environments["dano"].Fallthrough_.Variation)
 		if flags.Items[idx].Key != flag {
 			continue
 		}
