@@ -73,23 +73,15 @@ func main() {
 	}
 	for _, flag := range flagsAdded {
 		idx, _ := find(flags.Items, flag)
-		fmt.Println(idx)
-		fmt.Println(flags.Items[idx].Environments["dano"])
-		fmt.Println("Variation")
-		fmt.Println(flags.Items[idx].Environments["dano"].Fallthrough_)
-		if flags.Items[idx].Key != flag {
-			continue
-		}
 		var commentBody bytes.Buffer
 		tmplSetup := `
-Flag details: **[{{.Name}}](https://app.launchdarkly.com{{.Environments.dano.Site.Href}})** {{.Key}}
+Flag details: **[{{.Name}}](https://app.launchdarkly.com{{.Environments.dano.Site.Href}})** ` + "`" + `{{.Key}}` + "`" + `
 *{{.Description}}*
 Tags: {{range $tag := .Tags }}_{{$tag}}_ {{end}}
 Default variation: ` + "`" + `{{(index .Variations .Environments.dano.Fallthrough_.Variation).Value}}` + "`" + `
 Off variation: ` + "`" + `{{(index .Variations .Environments.dano.OffVariation).Value}}` + "`" + `
 Kind: **{{ .Kind }}**
 Temporary: **{{ .Temporary }}**
-[Open in Browser]
 `
 		tmpl, err := template.New("comment").Parse(tmplSetup)
 		err = tmpl.Execute(&commentBody, flags.Items[idx])
