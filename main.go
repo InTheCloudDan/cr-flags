@@ -178,20 +178,25 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 	return -1, false
 }
 
+type Comment struct {
+	Flag        ldapi.FeatureFlag
+	Environment ldapi.FeatureFlagConfig
+}
+
 func githubComment(flags []ldapi.FeatureFlag, flag string, environment string) (*github.IssueComment, error) {
 	idx, _ := find(flags, flag)
-	commentTemplate := map[string]interface{}{
-		flag:        flags[idx],
-		environment: flags[idx].Environments[environment],
+	commentTemplate := Comment{
+		Flag:        flags[idx],
+		Environment: flags[idx].Environments[environment],
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-Flag details: **[{{.flag.Name}}](https://app.launchdarkly.com{{.environments.Site.Href}})** ` + "`" + `{{.flag.Key}}` + "`" + `
+Flag details: **[{{.Flag.Name}}](https://app.launchdarkly.com{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 *{{.flag.Description}}*
 Tags: {{range $tag := .flag.Tags }}_{{$tag}}_ {{end}}
 
-Default variation: ` + "`" + `{{(index .flag.Variations .environment.Fallthrough_.Variation).Value}}` + "`" + `
-Off variation: ` + "`" + `{{(index .flag.Variations .environment.OffVariation).Value}}` + "`" + `
+Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
+Off variation: ` + "`" + `{{(index .Flag.Variations .Environment.OffVariation).Value}}` + "`" + `
 Kind: **{{ .flag.Kind }}**
 Temporary: **{{ .flag.Temporary }}**
 `
