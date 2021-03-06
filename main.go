@@ -83,7 +83,7 @@ func main() {
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
 	diffRows := strings.Split(raw, "\n")
-	// chatbox
+	// myFlag
 	var flagsAdded []string
 	var flagsRemoved []string
 	for _, row := range diffRows {
