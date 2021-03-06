@@ -168,9 +168,10 @@ func main() {
 		}
 		if existingComment > 0 {
 			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, createComment)
-
+			fmt.Println("updating")
 		} else {
 			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
+			fmt.Println("new comment")
 		}
 		if err != nil {
 			fmt.Println(err)
