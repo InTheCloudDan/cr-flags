@@ -64,15 +64,26 @@ func main() {
 	for _, flag := range append(flags.Items) {
 		flagKeys = append(flagKeys, flag.Key)
 	}
+
 	getWorkspace := os.Getenv("GITHUB_WORKSPACE")
 	viper.Set("dir", getWorkspace)
 	viper.Set("accessToken", apiToken)
 
 	err = options.InitYAML()
+	opts, err := options.GetOptions()
 	if err != nil {
 		fmt.Println(err)
 	}
-	coderefs.GenerateAliases(flagKeys, nil, getWorkspace)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	aliases, err := coderefs.GenerateAliases(flagKeys, opts.Aliases, getWorkspace)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("failed to create flag key aliases")
+	}
+	fmt.Println(aliases)
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
