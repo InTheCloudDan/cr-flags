@@ -149,7 +149,10 @@ func main() {
 		// 		flagsRemoved = append(flagsRemoved[:idx], flagsRemoved[idx+1:]...)
 		// 	}
 		// }
-		createComment, err := githubComment(flags.Items, flag, aliases, ldEnvironment, ldInstance)
+
+		// If flag is in both added and removed then it is being modified
+		delete(flagsRemoved, flag)
+		createComment, err := githubComment(flags.Items, flag, aliases, "Added/Modified", ldEnvironment, ldInstance)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -159,7 +162,7 @@ func main() {
 		}
 	}
 	for flag, aliases := range flagsRemoved {
-		createComment, err := githubComment(flags.Items, flag, aliases, ldEnvironment, ldInstance)
+		createComment, err := githubComment(flags.Items, flag, aliases, "Removed", ldEnvironment, ldInstance)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -249,21 +252,23 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 type Comment struct {
 	Flag        ldapi.FeatureFlag
 	Aliases     []string
+	ChangeType  string
 	Environment ldapi.FeatureFlagConfig
 	LDInstance  string
 }
 
-func githubComment(flags []ldapi.FeatureFlag, flag string, aliases []string, environment string, instance string) (*github.IssueComment, error) {
+func githubComment(flags []ldapi.FeatureFlag, flag string, aliases []string, changeType string, environment string, instance string) (*github.IssueComment, error) {
 	idx, _ := find(flags, flag)
 	commentTemplate := Comment{
 		Flag:        flags[idx],
 		Aliases:     aliases,
+		ChangeType:  changeType,
 		Environment: flags[idx].Environments[environment],
 		LDInstance:  instance,
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-Flag details: **[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
+Flag details **{{ .ChangeType }}**: **[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 *{{.Flag.Description}}*
 Tags: {{range $tag := .Flag.Tags }}_{{$tag}}_ {{end}}
 
