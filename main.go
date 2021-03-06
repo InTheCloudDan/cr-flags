@@ -105,11 +105,25 @@ func main() {
 				if strings.Contains(row, flag.Key) {
 					flagsAdded = append(flagsAdded, flag.Key)
 				}
+				if len(aliases[flag.Key]) > 0 {
+					for _, alias := range aliases[flag.Key] {
+						if strings.Contains(row, alias) {
+							flagsAdded = append(flagsAdded, alias)
+						}
+					}
+				}
 			}
 		} else if strings.HasPrefix(row, "-") {
 			for _, flag := range flags.Items {
 				if strings.Contains(row, flag.Key) {
 					flagsRemoved = append(flagsAdded, flag.Key)
+				}
+				if len(aliases[flag.Key]) > 0 {
+					for _, alias := range aliases[flag.Key] {
+						if strings.Contains(row, alias) {
+							flagsRemoved = append(flagsRemoved, flag.Key)
+						}
+					}
 				}
 			}
 		}
