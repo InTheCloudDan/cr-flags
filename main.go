@@ -97,8 +97,8 @@ func main() {
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
 	diffRows := strings.Split(raw, "\n")
 	// myFlag tt
-	var flagsAdded map[string][]string
-	var flagsRemoved map[string][]string
+	flagsAdded := make(map[string][]string)
+	flagsRemoved := make(map[string][]string)
 
 	for _, row := range diffRows {
 		if strings.HasPrefix(row, "+") {
