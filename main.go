@@ -66,6 +66,8 @@ func main() {
 	}
 	getWorkspace := os.Getenv("GITHUB_WORKSPACE")
 	viper.Set("dir", getWorkspace)
+	viper.Set("accessToken", apiToken)
+
 	err = options.InitYAML()
 	if err != nil {
 		fmt.Println(err)
