@@ -11,9 +11,12 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/InTheCloudDan/ld-find-code-refs/coderefs"
+	"github.com/InTheCloudDan/ld-find-code-refs/options"
 	"github.com/antihax/optional"
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 )
 
@@ -48,7 +51,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	flagOpts := ldapi.GetFeatureFlagsOpts{
+	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
 		Env:     optional.NewInterface(ldEnvironment),
 		Summary: optional.NewBool(false),
 	}
@@ -56,7 +59,18 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	flagKeys := make([]string, 0, len(flags.Items))
 
+	for _, flag := range append(flags.Items) {
+		flagKeys = append(flagKeys, flag.Key)
+	}
+	getWorkspace := os.Getenv("GITHUB_WORKSPACE")
+	viper.Set("dir", getWorkspace)
+	err = options.InitYAML()
+	if err != nil {
+		fmt.Println(err)
+	}
+	coderefs.GenerateAliases(flagKeys, nil, getWorkspace)
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
