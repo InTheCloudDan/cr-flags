@@ -116,7 +116,7 @@ func main() {
 		} else if strings.HasPrefix(row, "-") {
 			for _, flag := range flags.Items {
 				if strings.Contains(row, flag.Key) {
-					flagsRemoved = append(flagsAdded, flag.Key)
+					flagsAdded = append(flagsAdded, flag.Key)
 				}
 				if len(aliases[flag.Key]) > 0 {
 					for _, alias := range aliases[flag.Key] {
@@ -132,6 +132,8 @@ func main() {
 		fmt.Println(err)
 	}
 
+	fmt.Println(flagsAdded)
+	fmt.Println(flagsRemoved)
 	for _, flag := range flagsAdded {
 		createComment, err := githubComment(flags.Items, flag, ldEnvironment, ldInstance)
 		if err != nil {
