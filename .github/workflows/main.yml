@@ -4,12 +4,17 @@ jobs:
   hello_world_job:
     runs-on: ubuntu-latest
     name: Test Find Flags
+    environment:
+      name: Test
     steps:
-      # To use this repository's private action,
-      # you must check out the repository
       - name: Checkout
         uses: actions/checkout@v2
       - name: Hello world action step
         uses: ./ # Uses an action in the root directory
         id: find_flags
-      # Use the output from the `hello` step
+        with:
+          project: support-service
+          environment: dano
+        env:
+          LAUNCHDARKLY_ACCESS_TOKEN: ${{ secrets.LAUNCHDARKLY_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
