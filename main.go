@@ -141,8 +141,8 @@ func main() {
 		fmt.Println(err)
 	}
 
-	fmt.Println(flagsAdded)
-	fmt.Println(flagsRemoved)
+	//fmt.Println(flagsAdded)
+	//fmt.Println(flagsRemoved)
 	for flag, aliases := range flagsAdded {
 		// for removedFlag, removedFlag := range flagsRemoved {
 		// 	if flag == removedFlag {
@@ -152,11 +152,26 @@ func main() {
 
 		// If flag is in both added and removed then it is being modified
 		delete(flagsRemoved, flag)
+		comments, _, err := issuesService.ListComments(ctx, owner, repo[1], *event.PullRequest.Number, nil)
+		if err != nil {
+			fmt.Println(err)
+		}
+		var existingComment int64
+		for _, comment := range comments {
+			if strings.Contains(*comment.Body, ldEnvironment) && strings.Contains(*comment.Body, ldEnvironment) {
+				existingComment = int64(comment.GetID())
+			}
+		}
 		createComment, err := githubComment(flags.Items, flag, aliases, "Added/Modified", ldEnvironment, ldInstance)
 		if err != nil {
 			fmt.Println(err)
 		}
-		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
+		if existingComment > 0 {
+			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, createComment)
+
+		} else {
+			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
+		}
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -268,7 +283,8 @@ func githubComment(flags []ldapi.FeatureFlag, flag string, aliases []string, cha
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-Flag details **{{ .ChangeType }}**: **[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
+Flag details **{{ .ChangeType }}**
+**[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 *{{.Flag.Description}}*
 Tags: {{range $tag := .Flag.Tags }}_{{$tag}}_ {{end}}
 
