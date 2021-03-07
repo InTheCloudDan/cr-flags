@@ -123,6 +123,7 @@ func main() {
 			// 	return filepath.SkipDir
 			// }
 			// return nil
+			fmt.Println(parsedFileB[1])
 			fmt.Println("skipping dir")
 			continue
 		}
