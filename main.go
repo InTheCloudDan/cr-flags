@@ -104,7 +104,9 @@ func main() {
 		fmt.Println("NEW DIFF")
 		fmt.Println(*parsedDiff)
 		// If file is being renamed we don't want to check it for flags.
-		if parsedDiff.OrigName != parsedDiff.NewName {
+		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 1)
+		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 1)
+		if parsedFileA[1] != parsedFileB[1] {
 			fmt.Println(parsedDiff.OrigName)
 			fmt.Println(parsedDiff.NewName)
 			fmt.Println("test")
