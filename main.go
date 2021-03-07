@@ -98,50 +98,56 @@ func main() {
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
 	fmt.Println(raw)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
+	flagsAdded := make(map[string][]string)
+	flagsRemoved := make(map[string][]string)
 	for _, parsedDiff := range multiFiles {
 		fmt.Println("NEW DIFF")
 		fmt.Println(*parsedDiff)
-	}
-	diffRows := strings.Split(raw, "\n")
-	flagsAdded := make(map[string][]string)
-	flagsRemoved := make(map[string][]string)
-
-	for _, row := range diffRows {
-		if strings.HasPrefix(row, "+") {
-			for _, flag := range flags.Items {
-				if strings.Contains(row, flag.Key) {
-					currentKeys := flagsAdded[flag.Key]
-					currentKeys = append(currentKeys, "")
-					flagsAdded[flag.Key] = currentKeys
-				}
-				if len(aliases[flag.Key]) > 0 {
-					for _, alias := range aliases[flag.Key] {
-						if strings.Contains(row, alias) {
+		// If file is being renamed we don't want to check it for flags.
+		if parsedDiff.OrigName != parsedDiff.NewName {
+			continue
+		}
+		for _, raw := range parsedDiff.Hunks {
+			diffRows := strings.Split(string(raw.Body), "\n")
+			for _, row := range diffRows {
+				if strings.HasPrefix(row, "+") {
+					for _, flag := range flags.Items {
+						if strings.Contains(row, flag.Key) {
 							currentKeys := flagsAdded[flag.Key]
-							currentKeys = append(currentKeys, alias)
+							currentKeys = append(currentKeys, "")
 							flagsAdded[flag.Key] = currentKeys
 						}
+						if len(aliases[flag.Key]) > 0 {
+							for _, alias := range aliases[flag.Key] {
+								if strings.Contains(row, alias) {
+									currentKeys := flagsAdded[flag.Key]
+									currentKeys = append(currentKeys, alias)
+									flagsAdded[flag.Key] = currentKeys
+								}
+							}
+						}
 					}
-				}
-			}
-		} else if strings.HasPrefix(row, "-") {
-			for _, flag := range flags.Items {
-				if strings.Contains(row, flag.Key) {
-					currentKeys := flagsRemoved[flag.Key]
-					currentKeys = append(currentKeys, "")
-					flagsRemoved[flag.Key] = currentKeys
-				}
-				if len(aliases[flag.Key]) > 0 {
-					for _, alias := range aliases[flag.Key] {
-						if strings.Contains(row, alias) {
+				} else if strings.HasPrefix(row, "-") {
+					for _, flag := range flags.Items {
+						if strings.Contains(row, flag.Key) {
 							currentKeys := flagsRemoved[flag.Key]
-							currentKeys = append(currentKeys, alias)
+							currentKeys = append(currentKeys, "")
 							flagsRemoved[flag.Key] = currentKeys
+						}
+						if len(aliases[flag.Key]) > 0 {
+							for _, alias := range aliases[flag.Key] {
+								if strings.Contains(row, alias) {
+									currentKeys := flagsRemoved[flag.Key]
+									currentKeys = append(currentKeys, alias)
+									flagsRemoved[flag.Key] = currentKeys
+								}
+							}
 						}
 					}
 				}
 			}
 		}
+
 	}
 	if err != nil {
 		fmt.Println(err)
