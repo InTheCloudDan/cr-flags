@@ -95,6 +95,7 @@ func main() {
 
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
+	fmt.Println(raw)
 	diffRows := strings.Split(raw, "\n")
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
