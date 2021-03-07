@@ -103,6 +103,7 @@ func main() {
 	flagsRemoved := make(map[string][]string)
 	allIgnores := newIgnore(os.Getenv("GITHUB_WORKSPACE"))
 	fmt.Println(allIgnores.ignores)
+	fmt.Println(allIgnores.path)
 	for _, parsedDiff := range multiFiles {
 		// If file is being renamed we don't want to check it for flags.
 		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
@@ -112,6 +113,10 @@ func main() {
 		fmt.Println(isDir)
 		if err != nil {
 			fmt.Println(err)
+		}
+		if allIgnores.Match(parsedFileB[1], isDir) {
+			fmt.Println("match ignores")
+			fmt.Println(parsedFileB[1])
 		}
 		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(parsedFileB[1], isDir) {
 			// if isDir {
@@ -357,7 +362,7 @@ func newIgnore(path string) ignore {
 
 func (m ignore) Match(path string, isDir bool) bool {
 	for _, i := range m.ignores {
-		if i.Match(path, isDir) {
+		if i.Maxftch(path, isDir) {
 			return true
 		}
 	}
