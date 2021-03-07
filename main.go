@@ -86,7 +86,6 @@ func main() {
 		fmt.Println(err)
 		fmt.Println("failed to create flag key aliases")
 	}
-	fmt.Println(aliases)
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
@@ -102,18 +101,13 @@ func main() {
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
+	allIgnores := newIgnore(os.Getenv("GITHUB_WORKSPACE"))
+	fmt.Println(allIgnores.ignores)
 	for _, parsedDiff := range multiFiles {
-		fmt.Println("NEW DIFF")
-		fmt.Println(*parsedDiff)
 		// If file is being renamed we don't want to check it for flags.
 		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
 		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
-		fmt.Println(parsedFileA)
-		fmt.Println(parsedFileB)
-		allIgnores := newIgnore(os.Getenv("GITHUB_WORKSPACE"))
-		fmt.Println(allIgnores.ignores)
 		info, err := os.Stat(parsedFileB[1])
-		fmt.Println(info)
 		isDir := info.IsDir()
 		fmt.Println(isDir)
 		if err != nil {
