@@ -3,7 +3,7 @@ module github.com/intheclouddan/cr-flags
 go 1.15
 
 require (
-	github.com/InTheCloudDan/ld-find-code-refs v0.0.1-rc3.0.20210306201650-f6119ee1ae60
+	github.com/InTheCloudDan/ld-find-code-refs v0.0.1-rc3.0.20210306221038-4b8ab0f7ec4b
 	github.com/antihax/optional v1.0.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v1.0.0 // indirect

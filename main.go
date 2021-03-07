@@ -64,13 +64,26 @@ func main() {
 	for _, flag := range append(flags.Items) {
 		flagKeys = append(flagKeys, flag.Key)
 	}
+
 	getWorkspace := os.Getenv("GITHUB_WORKSPACE")
 	viper.Set("dir", getWorkspace)
+	viper.Set("accessToken", apiToken)
+
 	err = options.InitYAML()
+	opts, err := options.GetOptions()
 	if err != nil {
 		fmt.Println(err)
 	}
-	coderefs.GenerateAliases(flagKeys, nil, getWorkspace)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	aliases, err := coderefs.GenerateAliases(flagKeys, opts.Aliases, getWorkspace)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("failed to create flag key aliases")
+	}
+	fmt.Println(aliases)
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
@@ -83,20 +96,43 @@ func main() {
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
 	diffRows := strings.Split(raw, "\n")
-	// myFlag
-	var flagsAdded []string
-	var flagsRemoved []string
+	// myFlag tt
+	flagsAdded := make(map[string][]string)
+	flagsRemoved := make(map[string][]string)
+
 	for _, row := range diffRows {
 		if strings.HasPrefix(row, "+") {
 			for _, flag := range flags.Items {
 				if strings.Contains(row, flag.Key) {
-					flagsAdded = append(flagsAdded, flag.Key)
+					currentKeys := flagsAdded[flag.Key]
+					currentKeys = append(currentKeys, "")
+					flagsAdded[flag.Key] = currentKeys
+				}
+				if len(aliases[flag.Key]) > 0 {
+					for _, alias := range aliases[flag.Key] {
+						if strings.Contains(row, alias) {
+							currentKeys := flagsAdded[flag.Key]
+							currentKeys = append(currentKeys, alias)
+							flagsAdded[flag.Key] = currentKeys
+						}
+					}
 				}
 			}
 		} else if strings.HasPrefix(row, "-") {
 			for _, flag := range flags.Items {
 				if strings.Contains(row, flag.Key) {
-					flagsRemoved = append(flagsAdded, flag.Key)
+					currentKeys := flagsRemoved[flag.Key]
+					currentKeys = append(currentKeys, "")
+					flagsRemoved[flag.Key] = currentKeys
+				}
+				if len(aliases[flag.Key]) > 0 {
+					for _, alias := range aliases[flag.Key] {
+						if strings.Contains(row, alias) {
+							currentKeys := flagsRemoved[flag.Key]
+							currentKeys = append(currentKeys, alias)
+							flagsRemoved[flag.Key] = currentKeys
+						}
+					}
 				}
 			}
 		}
@@ -105,8 +141,44 @@ func main() {
 		fmt.Println(err)
 	}
 
-	for _, flag := range flagsAdded {
-		createComment, err := githubComment(flags.Items, flag, ldEnvironment, ldInstance)
+	//fmt.Println(flagsAdded)
+	//fmt.Println(flagsRemoved)
+	for flag, aliases := range flagsAdded {
+		// for removedFlag, removedFlag := range flagsRemoved {
+		// 	if flag == removedFlag {
+		// 		flagsRemoved = append(flagsRemoved[:idx], flagsRemoved[idx+1:]...)
+		// 	}
+		// }
+
+		// If flag is in both added and removed then it is being modified
+		delete(flagsRemoved, flag)
+		comments, _, err := issuesService.ListComments(ctx, owner, repo[1], *event.PullRequest.Number, nil)
+		if err != nil {
+			fmt.Println(err)
+		}
+		var existingComment int64
+		for _, comment := range comments {
+			if strings.Contains(*comment.Body, ldEnvironment) && strings.Contains(*comment.Body, ldEnvironment) {
+				existingComment = int64(comment.GetID())
+			}
+		}
+		createComment, err := githubComment(flags.Items, flag, aliases, "Added/Modified", ldEnvironment, ldInstance)
+		if err != nil {
+			fmt.Println(err)
+		}
+		if existingComment > 0 {
+			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, createComment)
+			fmt.Println("updating")
+		} else {
+			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
+			fmt.Println("new comment")
+		}
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	for flag, aliases := range flagsRemoved {
+		createComment, err := githubComment(flags.Items, flag, aliases, "Removed", ldEnvironment, ldInstance)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -115,16 +187,11 @@ func main() {
 			fmt.Println(err)
 		}
 	}
-	for _, flag := range flagsRemoved {
-		createComment, err := githubComment(flags.Items, flag, ldEnvironment, ldInstance)
-		if err != nil {
-			fmt.Println(err)
-		}
-		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
+}
+
+func remove(s []string, i int) []string {
+	s[i] = s[len(s)-1]
+	return s[:len(s)-1]
 }
 
 func parseEvent(path string) (*github.PullRequestEvent, error) {
@@ -200,20 +267,25 @@ func find(slice []ldapi.FeatureFlag, val string) (int, bool) {
 
 type Comment struct {
 	Flag        ldapi.FeatureFlag
+	Aliases     []string
+	ChangeType  string
 	Environment ldapi.FeatureFlagConfig
 	LDInstance  string
 }
 
-func githubComment(flags []ldapi.FeatureFlag, flag string, environment string, instance string) (*github.IssueComment, error) {
+func githubComment(flags []ldapi.FeatureFlag, flag string, aliases []string, changeType string, environment string, instance string) (*github.IssueComment, error) {
 	idx, _ := find(flags, flag)
 	commentTemplate := Comment{
 		Flag:        flags[idx],
+		Aliases:     aliases,
+		ChangeType:  changeType,
 		Environment: flags[idx].Environments[environment],
 		LDInstance:  instance,
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-Flag details: **[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
+Flag details **{{ .ChangeType }}**
+**[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 *{{.Flag.Description}}*
 Tags: {{range $tag := .Flag.Tags }}_{{$tag}}_ {{end}}
 
@@ -221,6 +293,7 @@ Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough
 Off variation: ` + "`" + `{{(index .Flag.Variations .Environment.OffVariation).Value}}` + "`" + `
 Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
+Aliases: {{ .Aliases }}
 `
 	tmpl, err := template.New("comment").Parse(tmplSetup)
 	if err != nil {
