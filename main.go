@@ -114,7 +114,7 @@ func main() {
 		info, err := os.Stat(parsedFileA[1])
 		fmt.Println(info)
 		isDir := info.IsDir()
-
+		fmt.Println(isDir)
 		if err != nil {
 			fmt.Println(err)
 		}
