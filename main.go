@@ -98,7 +98,10 @@ func main() {
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
 	fmt.Println(raw)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
-	fmt.Println(multiFiles)
+	for _, parsedDiff := range multiFiles {
+		fmt.Println("NEW DIFF")
+		fmt.Println(*parsedDiff)
+	}
 	diffRows := strings.Split(raw, "\n")
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
