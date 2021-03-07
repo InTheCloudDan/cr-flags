@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/antihax/optional"
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	"github.com/monochromegane/go-gitignore"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
@@ -108,15 +110,27 @@ func main() {
 		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
 		fmt.Println(parsedFileA)
 		fmt.Println(parsedFileA)
+		allIgnores := newIgnore(os.Getenv("GITHUB_WORKSPACE"))
+		info, err := os.Stat(parsedFileA[1])
+		fmt.Println(info)
+		isDir := info.IsDir()
+
+		if err != nil {
+			fmt.Println(err)
+		}
+		if strings.HasPrefix(parsedFileA[1], ".") || allIgnores.Match(parsedFileA[1], isDir) {
+			// if isDir {
+			// 	return filepath.SkipDir
+			// }
+			// return nil
+			fmt.Println("skipping dir")
+			continue
+		}
 		if parsedFileA[1] != parsedFileB[1] {
-			fmt.Println(parsedDiff.OrigName)
-			fmt.Println(parsedDiff.NewName)
-			fmt.Println("test")
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
 			diffRows := strings.Split(string(raw.Body), "\n")
-			fmt.Println(diffRows)
 			for _, row := range diffRows {
 				if strings.HasPrefix(row, "+") {
 					for _, flag := range flags.Items {
@@ -326,4 +340,32 @@ Aliases: {{ .Aliases }}
 		Body: &commentStr,
 	}
 	return &comment, nil
+}
+
+type ignore struct {
+	path    string
+	ignores []gitignore.IgnoreMatcher
+}
+
+func newIgnore(path string) ignore {
+	ignoreFiles := []string{".gitignore", ".ignore", ".ldignore"}
+	ignores := make([]gitignore.IgnoreMatcher, 0, len(ignoreFiles))
+	for _, ignoreFile := range ignoreFiles {
+		i, err := gitignore.NewGitIgnore(filepath.Join(path, ignoreFile))
+		if err != nil {
+			continue
+		}
+		ignores = append(ignores, i)
+	}
+	return ignore{path: path, ignores: ignores}
+}
+
+func (m ignore) Match(path string, isDir bool) bool {
+	for _, i := range m.ignores {
+		if i.Match(path, isDir) {
+			return true
+		}
+	}
+
+	return false
 }
