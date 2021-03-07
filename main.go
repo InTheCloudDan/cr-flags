@@ -96,7 +96,7 @@ func main() {
 
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
-	fmt.Println(raw)
+	///fmt.Println(raw)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
@@ -105,10 +105,12 @@ func main() {
 		fmt.Println(*parsedDiff)
 		// If file is being renamed we don't want to check it for flags.
 		if parsedDiff.OrigName != parsedDiff.NewName {
+			fmt.Println("test")
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
 			diffRows := strings.Split(string(raw.Body), "\n")
+			fmt.Println(diffRows)
 			for _, row := range diffRows {
 				if strings.HasPrefix(row, "+") {
 					for _, flag := range flags.Items {
