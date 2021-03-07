@@ -109,16 +109,16 @@ func main() {
 		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
 		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
 		fmt.Println(parsedFileA)
-		fmt.Println(parsedFileA)
+		fmt.Println(parsedFileB)
 		allIgnores := newIgnore(os.Getenv("GITHUB_WORKSPACE"))
-		info, err := os.Stat(parsedFileA[1])
+		info, err := os.Stat(parsedFileB[1])
 		fmt.Println(info)
 		isDir := info.IsDir()
 		fmt.Println(isDir)
 		if err != nil {
 			fmt.Println(err)
 		}
-		if strings.HasPrefix(parsedFileA[1], ".") || allIgnores.Match(parsedFileA[1], isDir) {
+		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(parsedFileB[1], isDir) {
 			// if isDir {
 			// 	return filepath.SkipDir
 			// }
