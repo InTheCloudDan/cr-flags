@@ -16,6 +16,7 @@ import (
 	"github.com/antihax/optional"
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	"github.com/sourcegraph/go-diff/diff"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 )
@@ -96,6 +97,8 @@ func main() {
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
 	fmt.Println(raw)
+	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
+	fmt.Println(multiFiles)
 	diffRows := strings.Split(raw, "\n")
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
