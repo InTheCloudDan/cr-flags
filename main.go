@@ -111,6 +111,7 @@ func main() {
 		fmt.Println(parsedFileA)
 		fmt.Println(parsedFileB)
 		allIgnores := newIgnore(os.Getenv("GITHUB_WORKSPACE"))
+		fmt.Println(allIgnores.ignores)
 		info, err := os.Stat(parsedFileB[1])
 		fmt.Println(info)
 		isDir := info.IsDir()
