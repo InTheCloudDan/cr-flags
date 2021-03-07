@@ -362,7 +362,7 @@ func newIgnore(path string) ignore {
 
 func (m ignore) Match(path string, isDir bool) bool {
 	for _, i := range m.ignores {
-		if i.Maxftch(path, isDir) {
+		if i.Match(path, isDir) {
 			return true
 		}
 	}
