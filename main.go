@@ -181,16 +181,15 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-
+	var existingComment int64
+	for _, comment := range comments {
+		if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
+			existingComment = int64(comment.GetID())
+		}
+	}
 	for flag, aliases := range flagsAdded {
 		// If flag is in both added and removed then it is being modified
 		delete(flagsRemoved, flag)
-		var existingComment int64
-		for _, comment := range comments {
-			if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
-				existingComment = int64(comment.GetID())
-			}
-		}
 		createComment, err := githubFlagComment(flags.Items, flag, aliases, "Added/Modified", ldEnvironment, ldInstance)
 		if err != nil {
 			fmt.Println(err)
@@ -205,12 +204,7 @@ func main() {
 		}
 	}
 	for flag, aliases := range flagsRemoved {
-		var existingComment int64
-		for _, comment := range comments {
-			if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
-				existingComment = int64(comment.GetID())
-			}
-		}
+
 		createComment, err := githubFlagComment(flags.Items, flag, aliases, "Removed", ldEnvironment, ldInstance)
 		if err != nil {
 			fmt.Println(err)
@@ -224,7 +218,7 @@ func main() {
 			fmt.Println(err)
 		}
 	}
-	if len(flagsAdded) == 0 && len(flagsRemoved) == 0 {
+	if (len(flagsAdded) == 0 && len(flagsRemoved) == 0) && !(existingComment > 0) {
 		createComment := githubNoFlagComment()
 		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
 		if err != nil {
