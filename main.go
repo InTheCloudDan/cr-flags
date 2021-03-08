@@ -105,13 +105,24 @@ func main() {
 		// If file is being renamed we don't want to check it for flags.
 		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
 		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
+		fmt.Println(parsedFileB)
+		fullPathToA := workspace + "/" + parsedFileA[1]
 		fullPathToB := workspace + "/" + parsedFileB[1]
-		info, err := os.Stat(parsedFileB[1])
-		isDir := info.IsDir()
+		info, err := os.Stat(fullPathToB)
+		var isDir bool
+		var fileToParse string
+		if info == nil {
+			isDir = false
+			fileToParse = fullPathToA
+		} else {
+			isDir = info.IsDir()
+			fileToParse = fullPathToB
+
+		}
 		if err != nil {
 			fmt.Println(err)
 		}
-		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fullPathToB, isDir) {
+		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fileToParse, isDir) {
 			if isDir {
 				continue
 			}
@@ -170,16 +181,15 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-
+	var existingComment int64
+	for _, comment := range comments {
+		if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
+			existingComment = int64(comment.GetID())
+		}
+	}
 	for flag, aliases := range flagsAdded {
 		// If flag is in both added and removed then it is being modified
 		delete(flagsRemoved, flag)
-		var existingComment int64
-		for _, comment := range comments {
-			if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
-				existingComment = int64(comment.GetID())
-			}
-		}
 		createComment, err := githubFlagComment(flags.Items, flag, aliases, "Added/Modified", ldEnvironment, ldInstance)
 		if err != nil {
 			fmt.Println(err)
@@ -194,12 +204,7 @@ func main() {
 		}
 	}
 	for flag, aliases := range flagsRemoved {
-		var existingComment int64
-		for _, comment := range comments {
-			if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
-				existingComment = int64(comment.GetID())
-			}
-		}
+
 		createComment, err := githubFlagComment(flags.Items, flag, aliases, "Removed", ldEnvironment, ldInstance)
 		if err != nil {
 			fmt.Println(err)
@@ -213,7 +218,7 @@ func main() {
 			fmt.Println(err)
 		}
 	}
-	if len(flagsAdded) == 0 && len(flagsRemoved) == 0 {
+	if (len(flagsAdded) == 0 && len(flagsRemoved) == 0) && !(existingComment > 0) {
 		createComment := githubNoFlagComment()
 		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
 		if err != nil {
