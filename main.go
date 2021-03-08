@@ -178,7 +178,7 @@ func main() {
 		}
 		var existingComment int64
 		for _, comment := range comments {
-			if strings.Contains(*comment.Body, ldEnvironment) && strings.Contains(*comment.Body, ldEnvironment) {
+			if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
 				existingComment = int64(comment.GetID())
 			}
 		}
@@ -188,10 +188,8 @@ func main() {
 		}
 		if existingComment > 0 {
 			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, createComment)
-			fmt.Println("updating")
 		} else {
 			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
-			fmt.Println("new comment")
 		}
 		if err != nil {
 			fmt.Println(err)
@@ -304,7 +302,7 @@ func githubComment(flags []ldapi.FeatureFlag, flag string, aliases []string, cha
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-Flag details **{{ .ChangeType }}**
+LaunchDarkly Flag Details **{{ .ChangeType }}**
 **[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 *{{.Flag.Description}}*
 Tags: {{range $tag := .Flag.Tags }}_{{$tag}}_ {{end}}
