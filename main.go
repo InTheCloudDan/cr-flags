@@ -107,8 +107,8 @@ func main() {
 		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
 		fmt.Println(parsedFileB)
 		fullPathToB := workspace + "/" + parsedFileB[1]
-		info, err := os.Stat(parsedFileB[1])
-		fmt.Println(info)
+		info, err := os.Stat(fullPathToB)
+		fmt.Println(info.IsDir())
 		isDir := info.IsDir()
 		if err != nil {
 			fmt.Println(err)
