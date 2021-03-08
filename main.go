@@ -100,20 +100,18 @@ func main() {
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
 	allIgnores := ignore.NewIgnore(workspace)
+
 	for _, parsedDiff := range multiFiles {
 		// If file is being renamed we don't want to check it for flags.
 		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
 		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
+		fullPathToB := workspace + "/" + parsedFileB[1]
 		info, err := os.Stat(parsedFileB[1])
 		isDir := info.IsDir()
 		if err != nil {
 			fmt.Println(err)
 		}
-		if allIgnores.Match(workspace+"/"+parsedFileB[1], isDir) {
-			fmt.Println("match ignores")
-			fmt.Println(parsedFileB[1])
-		}
-		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(workspace+"/"+parsedFileB[1], isDir) {
+		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fullPathToB, isDir) {
 			if isDir {
 				continue
 			}
@@ -181,7 +179,7 @@ func main() {
 				existingComment = int64(comment.GetID())
 			}
 		}
-		createComment, err := githubComment(flags.Items, flag, aliases, "Added/Modified", ldEnvironment, ldInstance)
+		createComment, err := githubFlagComment(flags.Items, flag, aliases, "Added/Modified", ldEnvironment, ldInstance)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -195,10 +193,17 @@ func main() {
 		}
 	}
 	for flag, aliases := range flagsRemoved {
-		createComment, err := githubComment(flags.Items, flag, aliases, "Removed", ldEnvironment, ldInstance)
+		createComment, err := githubFlagComment(flags.Items, flag, aliases, "Removed", ldEnvironment, ldInstance)
 		if err != nil {
 			fmt.Println(err)
 		}
+		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	if len(flagsAdded) == 0 && len(flagsRemoved) == 0 {
+		createComment := githubNoFlagComment()
 		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
 		if err != nil {
 			fmt.Println(err)
@@ -290,7 +295,7 @@ type Comment struct {
 	LDInstance  string
 }
 
-func githubComment(flags []ldapi.FeatureFlag, flag string, aliases []string, changeType string, environment string, instance string) (*github.IssueComment, error) {
+func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string, changeType string, environment string, instance string) (*github.IssueComment, error) {
 	idx, _ := find(flags, flag)
 	commentTemplate := Comment{
 		Flag:        flags[idx],
@@ -323,4 +328,13 @@ Aliases: {{ .Aliases }}
 		Body: &commentStr,
 	}
 	return &comment, nil
+}
+
+func githubNoFlagComment() *github.IssueComment {
+	commentStr := `
+LaunchDarkly Flag Details: **No flag references found in PR**`
+	comment := github.IssueComment{
+		Body: &commentStr,
+	}
+	return &comment
 }
