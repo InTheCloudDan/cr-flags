@@ -110,7 +110,6 @@ func main() {
 		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
 		info, err := os.Stat(parsedFileB[1])
 		isDir := info.IsDir()
-		fmt.Println(isDir)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -118,7 +117,7 @@ func main() {
 			fmt.Println("match ignores")
 			fmt.Println(parsedFileB[1])
 		}
-		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(os.Getenv("GITHUB_WORKSPACE")+parsedFileB[1], isDir) {
+		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(os.Getenv("GITHUB_WORKSPACE")+"/"+parsedFileB[1], isDir) {
 			// if isDir {
 			// 	return filepath.SkipDir
 			// }
@@ -364,7 +363,6 @@ func newIgnore(path string) ignore {
 
 func (m ignore) Match(path string, isDir bool) bool {
 	fmt.Println(path)
-	fmt.Println(isDir)
 	for _, i := range m.ignores {
 		fmt.Println(i)
 		fmt.Println(i.Match(path, isDir))
