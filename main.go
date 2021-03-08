@@ -118,7 +118,7 @@ func main() {
 			fmt.Println("match ignores")
 			fmt.Println(parsedFileB[1])
 		}
-		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(parsedFileB[1], isDir) {
+		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(os.Getenv("GITHUB_WORKSPACE")+parsedFileB[1], isDir) {
 			// if isDir {
 			// 	return filepath.SkipDir
 			// }
@@ -352,6 +352,7 @@ func newIgnore(path string) ignore {
 	ignoreFiles := []string{".gitignore", ".ignore", ".ldignore"}
 	ignores := make([]gitignore.IgnoreMatcher, 0, len(ignoreFiles))
 	for _, ignoreFile := range ignoreFiles {
+		fmt.Println(filepath.Join(path, ignoreFile))
 		i, err := gitignore.NewGitIgnore(filepath.Join(path, ignoreFile))
 		if err != nil {
 			continue
