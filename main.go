@@ -211,7 +211,7 @@ func main() {
 			fmt.Println(err)
 		}
 		if existingComment > 0 {
-			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
+			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, createComment)
 		} else {
 			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
 		}
