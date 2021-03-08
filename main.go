@@ -129,7 +129,7 @@ func main() {
 			}
 			continue
 		}
-		if parsedFileA[1] != parsedFileB[1] {
+		if (parsedFileA[1] != parsedFileB[1]) && !strings.Contains(parsedFileB[1], "dev/null") {
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
