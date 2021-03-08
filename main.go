@@ -101,8 +101,6 @@ func main() {
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
 	allIgnores := ignore.NewIgnore(os.Getenv("GITHUB_WORKSPACE"))
-	fmt.Println(allIgnores.ignores)
-	fmt.Println(allIgnores.path)
 	for _, parsedDiff := range multiFiles {
 		// If file is being renamed we don't want to check it for flags.
 		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
