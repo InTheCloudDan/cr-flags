@@ -67,8 +67,8 @@ func main() {
 		flagKeys = append(flagKeys, flag.Key)
 	}
 
-	getWorkspace := os.Getenv("GITHUB_WORKSPACE")
-	viper.Set("dir", getWorkspace)
+	workspace := os.Getenv("GITHUB_WORKSPACE")
+	viper.Set("dir", workspace)
 	viper.Set("accessToken", apiToken)
 
 	err = options.InitYAML()
@@ -80,7 +80,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	aliases, err := coderefs.GenerateAliases(flagKeys, opts.Aliases, getWorkspace)
+	aliases, err := coderefs.GenerateAliases(flagKeys, opts.Aliases, workspace)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("failed to create flag key aliases")
@@ -100,7 +100,7 @@ func main() {
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
-	allIgnores := ignore.NewIgnore(os.Getenv("GITHUB_WORKSPACE"))
+	allIgnores := ignore.NewIgnore(workspace)
 	for _, parsedDiff := range multiFiles {
 		// If file is being renamed we don't want to check it for flags.
 		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
@@ -114,7 +114,7 @@ func main() {
 			fmt.Println("match ignores")
 			fmt.Println(parsedFileB[1])
 		}
-		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(os.Getenv("GITHUB_WORKSPACE")+"/"+parsedFileB[1], isDir) {
+		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(workspace+"/"+parsedFileB[1], isDir) {
 			if isDir {
 				continue
 			}
