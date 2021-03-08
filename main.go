@@ -105,8 +105,10 @@ func main() {
 		// If file is being renamed we don't want to check it for flags.
 		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
 		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
+		fmt.Println(parsedFileB)
 		fullPathToB := workspace + "/" + parsedFileB[1]
 		info, err := os.Stat(parsedFileB[1])
+		fmt.Println(info)
 		isDir := info.IsDir()
 		if err != nil {
 			fmt.Println(err)
