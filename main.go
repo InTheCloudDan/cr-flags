@@ -108,6 +108,7 @@ func main() {
 		fmt.Println(parsedFileB)
 		fullPathToB := workspace + "/" + parsedFileB[1]
 		info, err := os.Stat(fullPathToB)
+		fmt.Println("About isDir")
 		fmt.Println(info.IsDir())
 		isDir := info.IsDir()
 		if err != nil {
