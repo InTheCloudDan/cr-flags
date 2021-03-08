@@ -365,6 +365,7 @@ func (m ignore) Match(path string, isDir bool) bool {
 	fmt.Println(path)
 	fmt.Println(isDir)
 	for _, i := range m.ignores {
+		fmt.Println(i)
 		fmt.Println(i.Match(path, isDir))
 		if i.Match(path, isDir) {
 			return true
