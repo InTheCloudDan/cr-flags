@@ -96,7 +96,6 @@ func main() {
 
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
-	///fmt.Println(raw)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
@@ -110,7 +109,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
-		if allIgnores.Match(parsedFileB[1], isDir) {
+		if allIgnores.Match(workspace+"/"+parsedFileB[1], isDir) {
 			fmt.Println("match ignores")
 			fmt.Println(parsedFileB[1])
 		}
