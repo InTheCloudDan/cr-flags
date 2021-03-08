@@ -106,19 +106,23 @@ func main() {
 		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
 		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
 		fmt.Println(parsedFileB)
+		fullPathToA := workspace + "/" + parsedFileA[1]
 		fullPathToB := workspace + "/" + parsedFileB[1]
 		info, err := os.Stat(fullPathToB)
 		var isDir bool
+		var fileToParse string
 		if info == nil {
 			isDir = false
+			fileToParse = fullPathToA
 		} else {
 			isDir = info.IsDir()
+			fileToParse = fullPathToB
 
 		}
 		if err != nil {
 			fmt.Println(err)
 		}
-		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fullPathToB, isDir) {
+		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fileToParse, isDir) {
 			if isDir {
 				continue
 			}
