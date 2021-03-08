@@ -1,4 +1,4 @@
-module github.com/intheclouddan/cr-flags
+module github.com/InTheCloudDan/cr-flags
 
 go 1.15
 

@@ -8,16 +8,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 	"text/template"
 
+	"github.com/InTheCloudDan/cr-flags/ignore"
 	"github.com/InTheCloudDan/ld-find-code-refs/coderefs"
 	"github.com/InTheCloudDan/ld-find-code-refs/options"
 	"github.com/antihax/optional"
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
-	"github.com/monochromegane/go-gitignore"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
@@ -101,7 +100,7 @@ func main() {
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
-	allIgnores := newIgnore(os.Getenv("GITHUB_WORKSPACE"))
+	allIgnores := ignore.NewIgnore(os.Getenv("GITHUB_WORKSPACE"))
 	fmt.Println(allIgnores.ignores)
 	fmt.Println(allIgnores.path)
 	for _, parsedDiff := range multiFiles {
@@ -118,12 +117,9 @@ func main() {
 			fmt.Println(parsedFileB[1])
 		}
 		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(os.Getenv("GITHUB_WORKSPACE")+"/"+parsedFileB[1], isDir) {
-			// if isDir {
-			// 	return filepath.SkipDir
-			// }
-			// return nil
-			fmt.Println(parsedFileB[1])
-			fmt.Println("skipping dir")
+			if isDir {
+				continue
+			}
 			continue
 		}
 		if parsedFileA[1] != parsedFileB[1] {
@@ -175,15 +171,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	//fmt.Println(flagsAdded)
-	//fmt.Println(flagsRemoved)
 	for flag, aliases := range flagsAdded {
-		// for removedFlag, removedFlag := range flagsRemoved {
-		// 	if flag == removedFlag {
-		// 		flagsRemoved = append(flagsRemoved[:idx], flagsRemoved[idx+1:]...)
-		// 	}
-		// }
-
 		// If flag is in both added and removed then it is being modified
 		delete(flagsRemoved, flag)
 		comments, _, err := issuesService.ListComments(ctx, owner, repo[1], *event.PullRequest.Number, nil)
@@ -340,36 +328,4 @@ Aliases: {{ .Aliases }}
 		Body: &commentStr,
 	}
 	return &comment, nil
-}
-
-type ignore struct {
-	path    string
-	ignores []gitignore.IgnoreMatcher
-}
-
-func newIgnore(path string) ignore {
-	ignoreFiles := []string{".gitignore", ".ignore", ".ldignore"}
-	ignores := make([]gitignore.IgnoreMatcher, 0, len(ignoreFiles))
-	for _, ignoreFile := range ignoreFiles {
-		fmt.Println(filepath.Join(path, ignoreFile))
-		i, err := gitignore.NewGitIgnore(filepath.Join(path, ignoreFile))
-		if err != nil {
-			continue
-		}
-		ignores = append(ignores, i)
-	}
-	return ignore{path: path, ignores: ignores}
-}
-
-func (m ignore) Match(path string, isDir bool) bool {
-	fmt.Println(path)
-	for _, i := range m.ignores {
-		fmt.Println(i)
-		fmt.Println(i.Match(path, isDir))
-		if i.Match(path, isDir) {
-			return true
-		}
-	}
-
-	return false
 }
