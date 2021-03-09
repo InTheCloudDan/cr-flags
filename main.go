@@ -12,11 +12,11 @@ import (
 	"text/template"
 
 	"github.com/InTheCloudDan/cr-flags/ignore"
-	"github.com/InTheCloudDan/ld-find-code-refs/coderefs"
-	"github.com/InTheCloudDan/ld-find-code-refs/options"
 	"github.com/antihax/optional"
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	"github.com/launchdarkly/ld-find-code-refs/coderefs"
+	"github.com/launchdarkly/ld-find-code-refs/options"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
