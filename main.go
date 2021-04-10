@@ -53,7 +53,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
+	flagOpts := ldapi.GetFeatureFlagsOpts{
 		Env:     optional.NewInterface(ldEnvironment),
 		Summary: optional.NewBool(false),
 	}
