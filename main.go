@@ -198,12 +198,10 @@ func main() {
 		}
 	}
 	var addedComments []string
-	fmt.Println(flagsAdded)
-	fmt.Println(flagsRemoved)
 	for flag, aliases := range flagsAdded {
 		// If flag is in both added and removed then it is being modified
 		delete(flagsRemoved, flag)
-		createComment, err := githubFlagComment(flags.Items, flag, aliases, "Added/Modified", ldEnvironment, ldInstance)
+		createComment, err := githubFlagComment(flags.Items, flag, aliases, ldEnvironment, ldInstance)
 		addedComments = append(addedComments, createComment)
 		if err != nil {
 			fmt.Println(err)
@@ -211,7 +209,7 @@ func main() {
 	}
 	var removedComments []string
 	for flag, aliases := range flagsRemoved {
-		removedComment, err := githubFlagComment(flags.Items, flag, aliases, "Removed", ldEnvironment, ldInstance)
+		removedComment, err := githubFlagComment(flags.Items, flag, aliases, ldEnvironment, ldInstance)
 		removedComments = append(removedComments, removedComment)
 		if err != nil {
 			fmt.Println(err)
@@ -219,8 +217,14 @@ func main() {
 	}
 	var commentStr []string
 	commentStr = append(commentStr, starter)
-	commentStr = append(commentStr, addedComments...)
-	commentStr = append(commentStr, removedComments...)
+	if len(flagsAdded) > 0 {
+		commentStr = append(commentStr, "**Added/Modified**")
+		commentStr = append(commentStr, addedComments...)
+	}
+	if len(flagsRemoved) > 0 {
+		commentStr = append(commentStr, "**Removed**")
+		commentStr = append(commentStr, removedComments...)
+	}
 	postedComments := strings.Join(commentStr, "\n")
 	fmt.Println(postedComments)
 	comment := github.IssueComment{
@@ -332,20 +336,18 @@ type Comment struct {
 	LDInstance  string
 }
 
-func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string, changeType string, environment string, instance string) (string, error) {
+func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string, environment string, instance string) (string, error) {
 	idx, _ := find(flags, flag)
 	commentTemplate := Comment{
 		Flag:        flags[idx],
 		Aliases:     aliases,
-		ChangeType:  changeType,
 		Environment: flags[idx].Environments[environment],
 		LDInstance:  instance,
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-LaunchDarkly Flag Details **{{ .ChangeType }}**
 **[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
-*{{.Flag.Description}}*
+{{if .Flag.Description}}*{{.Flag.Description}}*{{end}}
 Tags: {{range $tag := .Flag.Tags }}_{{$tag}}_ {{end}}
 
 Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
