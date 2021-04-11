@@ -96,7 +96,7 @@ func main() {
 
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
-	fmt.Println(raw)
+	//fmt.Println(raw)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
@@ -112,6 +112,7 @@ func main() {
 		info, err := os.Stat(fullPathToB)
 		var isDir bool
 		var fileToParse string
+		// If there is no 'b' parse 'a', means file is deleted.
 		if info == nil {
 			isDir = false
 			fileToParse = fullPathToA
@@ -139,6 +140,7 @@ func main() {
 			diffRows := strings.Split(string(raw.Body), "\n")
 			for _, row := range diffRows {
 				if strings.HasPrefix(row, "+") {
+					fmt.Println(row)
 					for _, flag := range flags.Items {
 						if strings.Contains(row, flag.Key) {
 							currentKeys := flagsAdded[flag.Key]
