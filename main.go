@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -226,6 +227,8 @@ func main() {
 		commentStr = append(commentStr, removedComments...)
 	}
 	postedComments := strings.Join(commentStr, "\n")
+	hash := md5.Sum([]byte(postedComments))
+	postedComments = postedComments + "\n" + string(hash[:])
 	fmt.Println(postedComments)
 	comment := github.IssueComment{
 		Body: &postedComments,
@@ -347,7 +350,9 @@ func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string,
 	var commentBody bytes.Buffer
 	tmplSetup := `
 **[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
-{{if .Flag.Description}}*{{.Flag.Description}}*{{end}}
+{{-if .Flag.Description}}
+*{{.Flag.Description}}*
+{{-end}}
 Tags: {{range $tag := .Flag.Tags }}_{{$tag}}_ {{end}}
 
 Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
