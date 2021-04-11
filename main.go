@@ -134,8 +134,8 @@ func main() {
 			}
 			continue
 		}
-		if (parsedFileA[1] != parsedFileB[1]) && !strings.Contains(parsedFileB[1], "dev/null") {
-			fmt.Println("matching on file not same")
+		// We don't want to run on renaming of files.
+		if (parsedFileA[1] != parsedFileB[1]) && (!strings.Contains(parsedFileB[1], "dev/null") && !strings.Contains(parsedFileA[1], "dev/null")) {
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
