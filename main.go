@@ -228,7 +228,7 @@ func main() {
 	}
 	postedComments := strings.Join(commentStr, "\n")
 	hash := md5.Sum([]byte(postedComments))
-	postedComments = postedComments + "\n" + string(hash[:])
+	fmt.Println(string(hash[:]))
 	fmt.Println(postedComments)
 	comment := github.IssueComment{
 		Body: &postedComments,
