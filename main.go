@@ -223,7 +223,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	if (len(flagsAdded) == 0 && len(flagsRemoved) == 0) && !(existingComment > 0) {
+	if len(flagsAdded) == 0 && len(flagsRemoved) == 0 {
 		createComment := githubNoFlagComment()
 		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
 		if err != nil {
@@ -346,13 +346,13 @@ Aliases: {{ .Aliases }}
 	return commentBody.String(), nil
 }
 
+const starter = "LaunchDarkly Flag Details:"
+
 func githubNoFlagComment() *github.IssueComment {
-	commentStr := `
+	commentStr := `LaunchDarkly Flag Details:
  **No flag references found in PR**`
 	comment := github.IssueComment{
 		Body: &commentStr,
 	}
 	return &comment
 }
-
-const starter = "LaunchDarkly Flag Details:"
