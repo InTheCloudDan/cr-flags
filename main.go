@@ -372,9 +372,7 @@ Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough
 Off variation: ` + "`" + `{{(index .Flag.Variations .Environment.OffVariation).Value}}` + "`" + `
 Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
-{{- if not len(.Aliases) 0}}
-Aliases: {{range $alias := .Aliases }}` + "`" + `{{$alias}}` + "`" + `{{end}}
-{{- end}}
+
 `
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace}).Parse(tmplSetup))
 	// if err != nil {
