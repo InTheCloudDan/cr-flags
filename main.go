@@ -124,6 +124,7 @@ func main() {
 		fmt.Println(parsedFileB[1])
 		fmt.Println(isDir)
 		fmt.Println("debugging")
+		fmt.Println(fileToParse)
 		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fileToParse, isDir) {
 			if isDir {
 				continue

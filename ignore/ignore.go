@@ -29,6 +29,7 @@ func NewIgnore(path string) Ignore {
 func (m Ignore) Match(path string, isDir bool) bool {
 	for _, i := range m.ignores {
 		if i.Match(path, isDir) {
+			fmt.Println("matching true")
 			return true
 		}
 	}
