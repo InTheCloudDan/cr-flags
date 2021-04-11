@@ -364,13 +364,17 @@ func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string,
 {{- if .Flag.Description}}
 *{{.Flag.Description}}*
 {{- end}}
+{{- if .Flag.Tags}}
 Tags: {{range $tag := .Flag.Tags }}_{{$tag}}_ {{end}}
+{{- end}}
 
 Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
 Off variation: ` + "`" + `{{(index .Flag.Variations .Environment.OffVariation).Value}}` + "`" + `
 Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
+{{- if .Aliases}}
 Aliases: {{ .Aliases }}
+{{- end}}
 `
 	tmpl, err := template.New("comment").Parse(tmplSetup)
 	if err != nil {
