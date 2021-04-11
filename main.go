@@ -250,7 +250,7 @@ func main() {
 		fmt.Println("comment already exists")
 		return
 	}
-	postedComments = postedComments + "\n" + hex.EncodeToString(hash[:])
+	postedComments = postedComments + "\n comment hash: " + hex.EncodeToString(hash[:])
 	comment := github.IssueComment{
 		Body: &postedComments,
 	}
