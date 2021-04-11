@@ -12,11 +12,11 @@ import (
 	"text/template"
 
 	"github.com/InTheCloudDan/cr-flags/ignore"
-	"github.com/InTheCloudDan/ld-find-code-refs/coderefs"
-	"github.com/InTheCloudDan/ld-find-code-refs/options"
 	"github.com/antihax/optional"
 	"github.com/google/go-github/github"
 	ldapi "github.com/launchdarkly/api-client-go"
+	"github.com/launchdarkly/ld-find-code-refs/coderefs"
+	"github.com/launchdarkly/ld-find-code-refs/options"
 	"github.com/sourcegraph/go-diff/diff"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
@@ -53,7 +53,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
+	flagOpts := ldapi.GetFeatureFlagsOpts{
 		Env:     optional.NewInterface(ldEnvironment),
 		Summary: optional.NewBool(false),
 	}
@@ -96,6 +96,7 @@ func main() {
 
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
+	fmt.Println(raw)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
@@ -128,7 +129,7 @@ func main() {
 			}
 			continue
 		}
-		if parsedFileA[1] != parsedFileB[1] {
+		if (parsedFileA[1] != parsedFileB[1]) && !strings.Contains(parsedFileB[1], "dev/null") {
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
@@ -210,7 +211,7 @@ func main() {
 			fmt.Println(err)
 		}
 		if existingComment > 0 {
-			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
+			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, createComment)
 		} else {
 			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
 		}

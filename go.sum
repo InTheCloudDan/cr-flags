@@ -34,8 +34,6 @@ dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/InTheCloudDan/ld-find-code-refs v0.0.1-rc3.0.20210306221038-4b8ab0f7ec4b h1:cbFj4m2dV9XmavDBSrkFwLS87hkduvx6RD/HPcXywCI=
-github.com/InTheCloudDan/ld-find-code-refs v0.0.1-rc3.0.20210306221038-4b8ab0f7ec4b/go.mod h1:Jg75pbTOWySh1eZLdFdqQjU/RzeaBzRXEolvxIaei64=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/alcortesm/tgz v0.0.0-20161220082320-9c5fe88206d7 h1:uSoVVbwJiQipAclBbw+8quDsfcvFjOpI5iCf4p/cqCs=
 github.com/alcortesm/tgz v0.0.0-20161220082320-9c5fe88206d7/go.mod h1:6zEj6s6u/ghQa61ZWa/C2Aw3RkjiTBOix7dkqa1VLIs=
@@ -206,8 +204,6 @@ github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
 github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
 github.com/launchdarkly/api-client-go v3.9.0+incompatible h1:bzrusyzGADcDXPQIDt9cbMso7NH0bW/SfwZrCBy5+Ig=
 github.com/launchdarkly/api-client-go v3.9.0+incompatible/go.mod h1:INGa7NUZYSwVozwPV7l6ikgD7pzSOpZvg9I5sqCZIWs=
-github.com/launchdarkly/api-client-go v5.0.2+incompatible h1:qH1B/UL7IphXTo1gEoCJP/UIbD6ujbV0taSZujttNJw=
-github.com/launchdarkly/api-client-go v5.0.2+incompatible/go.mod h1:INGa7NUZYSwVozwPV7l6ikgD7pzSOpZvg9I5sqCZIWs=
 github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f h1:jfiPiz2hE/7mHv2NOS4cm07sSJCsKlbxmR7pzPhhvpU=
 github.com/launchdarkly/json-patch v0.0.0-20180720210516-dd68d883319f/go.mod h1:CHbYdMs8UjvNnS2fatlQvi4UYnBTRYGxRHc/0kQupSQ=
 github.com/launchdarkly/ld-find-code-refs v0.0.1-rc3.0.20210411000716-b3ce6ba54ace h1:TC84jDCzwCJTQSBZU6JFR+jIxR8AKfhFyXu0462HCvQ=
