@@ -201,15 +201,11 @@ func main() {
 	var addedComments []string
 	for _, flagKey := range addedKeys {
 		aliases := flagsAdded[flagKey]
-		fmt.Println("Aliases")
-		fmt.Println(aliases)
-		fmt.Println(len(aliases))
 		// If flag is in both added and removed then it is being modified
 		delete(flagsRemoved, flagKey)
 		flagAliases := aliases[:0]
 		for _, alias := range aliases {
 			if !(len(strings.TrimSpace(alias)) == 0) {
-				fmt.Println("added alias")
 				flagAliases = append(flagAliases, alias)
 			}
 		}
