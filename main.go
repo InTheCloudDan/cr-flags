@@ -362,7 +362,7 @@ func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string,
 	tmplSetup := `
 **[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
 {{- if .Flag.Description}}
-*{{.Flag.Description}}*
+*{{trim .Flag.Description}}*
 {{- end}}
 {{- if .Flag.Tags}}
 Tags: {{range $tag := .Flag.Tags }}_{{$tag}}_ {{end}}
@@ -376,11 +376,14 @@ Temporary: **{{ .Flag.Temporary }}**
 Aliases: {{ .Aliases }}
 {{- end}}
 `
-	tmpl, err := template.New("comment").Parse(tmplSetup)
+	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace}).Parse(tmplSetup))
+	// if err != nil {
+	// 	return "", err
+	// }
+	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
 		return "", err
 	}
-	err = tmpl.Execute(&commentBody, commentTemplate)
 	return commentBody.String(), nil
 }
 
