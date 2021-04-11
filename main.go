@@ -190,6 +190,8 @@ func main() {
 		}
 	}
 	var addedComments []string
+	fmt.Println(flagsAdded)
+	fmt.Println(flagsRemoved)
 	for flag, aliases := range flagsAdded {
 		// If flag is in both added and removed then it is being modified
 		delete(flagsRemoved, flag)
