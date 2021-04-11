@@ -234,8 +234,8 @@ func main() {
 		commentStr = append(commentStr, removedComments...)
 	}
 	postedComments := strings.Join(commentStr, "\n")
+	fmt.Println(postedComments)
 	hash := md5.Sum([]byte(postedComments))
-
 	if strings.Contains(existingCommentBody, hex.EncodeToString(hash[:])) {
 		fmt.Println("comment already exists")
 		return
