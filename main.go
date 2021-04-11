@@ -96,7 +96,6 @@ func main() {
 
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
-	fmt.Println(raw)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
@@ -188,38 +187,41 @@ func main() {
 			existingComment = int64(comment.GetID())
 		}
 	}
+	var addedComments []string
 	for flag, aliases := range flagsAdded {
 		// If flag is in both added and removed then it is being modified
 		delete(flagsRemoved, flag)
 		createComment, err := githubFlagComment(flags.Items, flag, aliases, "Added/Modified", ldEnvironment, ldInstance)
-		if err != nil {
-			fmt.Println(err)
-		}
-		if existingComment > 0 {
-			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, createComment)
-		} else {
-			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
-		}
+		addedComments = append(addedComments, createComment)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
+	var removedComments []string
 	for flag, aliases := range flagsRemoved {
-
-		createComment, err := githubFlagComment(flags.Items, flag, aliases, "Removed", ldEnvironment, ldInstance)
-		if err != nil {
-			fmt.Println(err)
-		}
-		if existingComment > 0 {
-			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, createComment)
-		} else {
-			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
-		}
+		removedComment, err := githubFlagComment(flags.Items, flag, aliases, "Removed", ldEnvironment, ldInstance)
+		removedComments = append(removedComments, removedComment)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
-	if (len(flagsAdded) == 0 && len(flagsRemoved) == 0) && !(existingComment > 0) {
+	var commentStr []string
+	commentStr = append(commentStr, starter)
+	commentStr = append(commentStr, addedComments...)
+	commentStr = append(commentStr, removedComments...)
+	postedComments := strings.Join(commentStr, "\n")
+	fmt.Println(postedComments)
+	comment := github.IssueComment{
+		Body: &postedComments,
+	}
+	if existingComment > 0 {
+		_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, &comment)
+	} else {
+		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
+	}
+	if err != nil {
+		fmt.Println(err)
+	} else if (len(flagsAdded) == 0 && len(flagsRemoved) == 0) && !(existingComment > 0) {
 		createComment := githubNoFlagComment()
 		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
 		if err != nil {
@@ -312,7 +314,7 @@ type Comment struct {
 	LDInstance  string
 }
 
-func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string, changeType string, environment string, instance string) (*github.IssueComment, error) {
+func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string, changeType string, environment string, instance string) (string, error) {
 	idx, _ := find(flags, flag)
 	commentTemplate := Comment{
 		Flag:        flags[idx],
@@ -336,22 +338,19 @@ Aliases: {{ .Aliases }}
 `
 	tmpl, err := template.New("comment").Parse(tmplSetup)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	err = tmpl.Execute(&commentBody, commentTemplate)
-	commentStr := commentBody.String()
-	fmt.Println(commentStr)
-	comment := github.IssueComment{
-		Body: &commentStr,
-	}
-	return &comment, nil
+	return commentBody.String(), nil
 }
 
 func githubNoFlagComment() *github.IssueComment {
 	commentStr := `
-LaunchDarkly Flag Details: **No flag references found in PR**`
+ **No flag references found in PR**`
 	comment := github.IssueComment{
 		Body: &commentStr,
 	}
 	return &comment
 }
+
+const starter = "LaunchDarkly Flag Details:"
