@@ -128,12 +128,14 @@ func main() {
 		fmt.Println("debugging")
 		fmt.Println(fileToParse)
 		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fileToParse, isDir) {
+			fmt.Println("dotfiles")
 			if isDir {
 				continue
 			}
 			continue
 		}
 		if (parsedFileA[1] != parsedFileB[1]) && !strings.Contains(parsedFileB[1], "dev/null") {
+			fmt.println("matching on file not same")
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
