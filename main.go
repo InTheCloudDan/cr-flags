@@ -214,14 +214,16 @@ func main() {
 	comment := github.IssueComment{
 		Body: &postedComments,
 	}
-	if existingComment > 0 {
+	if existingComment > 0 && !(len(flagsAdded) == 0 && len(flagsRemoved) == 0) {
 		_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, &comment)
 	} else {
 		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
 	}
 	if err != nil {
 		fmt.Println(err)
-	} else if (len(flagsAdded) == 0 && len(flagsRemoved) == 0) && !(existingComment > 0) {
+	}
+
+	if (len(flagsAdded) == 0 && len(flagsRemoved) == 0) && !(existingComment > 0) {
 		createComment := githubNoFlagComment()
 		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
 		if err != nil {
