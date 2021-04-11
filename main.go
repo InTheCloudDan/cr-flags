@@ -235,8 +235,12 @@ func main() {
 	}
 	postedComments := strings.Join(commentStr, "\n")
 	hash := md5.Sum([]byte(postedComments))
-	fmt.Println(hex.EncodeToString(hash[:]))
-	fmt.Println(postedComments)
+
+	if (strings.Contains(existingCommentBody, hex.EncodeToString(hash[:])) {
+		fmt.Println("comment already exists")
+		return
+	}
+	postedComments = postedComments + "\n" + hex.EncodeToString(hash[:])
 	comment := github.IssueComment{
 		Body: &postedComments,
 	}
