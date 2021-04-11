@@ -182,9 +182,11 @@ func main() {
 		fmt.Println(err)
 	}
 	var existingComment int64
+	var existingCommentBody string
 	for _, comment := range comments {
 		if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
 			existingComment = int64(comment.GetID())
+			existingCommentBody = *comment.Body
 		}
 	}
 	var addedComments []string
@@ -214,16 +216,20 @@ func main() {
 	comment := github.IssueComment{
 		Body: &postedComments,
 	}
-	if existingComment > 0 && !(len(flagsAdded) == 0 && len(flagsRemoved) == 0) {
-		_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, &comment)
-	} else {
-		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
-	}
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	if len(flagsAdded) == 0 && len(flagsRemoved) == 0 {
+	if !(len(flagsAdded) == 0 && len(flagsRemoved) == 0) {
+		if existingComment > 0 {
+			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, &comment)
+		} else {
+			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
+		}
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else if len(flagsAdded) == 0 && len(flagsRemoved) == 0 {
+		// Check if this is already the body, flags could have originally been included then removed in later commit
+		if strings.Contains(existingCommentBody, "No flag references found in PR") {
+			return
+		}
 		createComment := githubNoFlagComment()
 		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
 		if err != nil {
@@ -346,13 +352,13 @@ Aliases: {{ .Aliases }}
 	return commentBody.String(), nil
 }
 
-const starter = "LaunchDarkly Flag Details:"
-
 func githubNoFlagComment() *github.IssueComment {
-	commentStr := `LaunchDarkly Flag Details:
+	commentStr := `
  **No flag references found in PR**`
 	comment := github.IssueComment{
 		Body: &commentStr,
 	}
 	return &comment
 }
+
+const starter = "LaunchDarkly Flag Details:"
