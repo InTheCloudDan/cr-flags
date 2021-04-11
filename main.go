@@ -350,9 +350,9 @@ func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string,
 	var commentBody bytes.Buffer
 	tmplSetup := `
 **[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
-{{-if .Flag.Description}}
+{{- if .Flag.Description}}
 *{{.Flag.Description}}*
-{{-end}}
+{{- end}}
 Tags: {{range $tag := .Flag.Tags }}_{{$tag}}_ {{end}}
 
 Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
