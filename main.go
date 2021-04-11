@@ -209,10 +209,11 @@ func main() {
 		flagAliases := aliases[:0]
 		for _, alias := range aliases {
 			if !(len(strings.TrimSpace(alias)) == 0) {
+				fmt.Println("added alias")
 				flagAliases = append(flagAliases, alias)
 			}
 		}
-		createComment, err := githubFlagComment(flags.Items, flagKey, aliases, ldEnvironment, ldInstance)
+		createComment, err := githubFlagComment(flags.Items, flagKey, flagAliases, ldEnvironment, ldInstance)
 		addedComments = append(addedComments, createComment)
 		if err != nil {
 			fmt.Println(err)
