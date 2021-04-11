@@ -373,7 +373,7 @@ Off variation: ` + "`" + `{{(index .Flag.Variations .Environment.OffVariation).V
 Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
 {{- if .Aliases }}
-{{- if not ((len .Aliases) 0)}}
+{{- if ne (len .Aliases) 0}}
 Aliases: {{range $alias := .Aliases }}` + "`" + `{{$alias}} ` + "`" + `{{end}}
 {{- end}}
 {{- end}}
