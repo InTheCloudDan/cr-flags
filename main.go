@@ -121,10 +121,10 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
+		fmt.Println(parsedFileB[1])
+		fmt.Println(isDir)
+		fmt.Println("debugging")
 		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fileToParse, isDir) {
-			fmt.Println(parsedFileB[1])
-			fmt.Println(isDir)
-			fmt.Println("debugging")
 			if isDir {
 				continue
 			}
@@ -134,7 +134,6 @@ func main() {
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
-			fmt.Println(raw)
 			diffRows := strings.Split(string(raw.Body), "\n")
 			for _, row := range diffRows {
 				if strings.HasPrefix(row, "+") {
