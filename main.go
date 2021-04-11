@@ -135,7 +135,7 @@ func main() {
 			continue
 		}
 		if (parsedFileA[1] != parsedFileB[1]) && !strings.Contains(parsedFileB[1], "dev/null") {
-			fmt.println("matching on file not same")
+			fmt.Println("matching on file not same")
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
