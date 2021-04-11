@@ -197,6 +197,7 @@ func main() {
 	for key := range flagsAdded {
 		addedKeys = append(addedKeys, key)
 	}
+	// sort keys so hashing can work for checking if comment already exists
 	sort.Strings(addedKeys)
 	var addedComments []string
 	for _, flagKey := range addedKeys {
@@ -210,6 +211,9 @@ func main() {
 			}
 		}
 		createComment, err := githubFlagComment(flags.Items, flagKey, flagAliases, ldEnvironment, ldInstance)
+		if len(addedComments) > 0 {
+			addedComments = append(addedComments, "---")
+		}
 		addedComments = append(addedComments, createComment)
 		if err != nil {
 			fmt.Println(err)
@@ -240,7 +244,7 @@ func main() {
 		commentStr = append(commentStr, removedComments...)
 	}
 	postedComments := strings.Join(commentStr, "\n")
-	fmt.Println(postedComments)
+
 	hash := md5.Sum([]byte(postedComments))
 	if strings.Contains(existingCommentBody, hex.EncodeToString(hash[:])) {
 		fmt.Println("comment already exists")
@@ -386,9 +390,6 @@ Aliases: {{range $alias := .Aliases }}` + "`" + `{{$alias}} ` + "` -" + `{{end}}
 {{- end}}
 `
 	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace}).Parse(tmplSetup))
-	// if err != nil {
-	// 	return "", err
-	// }
 	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
 		return "", err
