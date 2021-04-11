@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -107,7 +109,6 @@ func main() {
 		// If file is being renamed we don't want to check it for flags.
 		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
 		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
-		fmt.Println(parsedFileB[1])
 		fullPathToA := workspace + "/" + parsedFileA[1]
 		fullPathToB := workspace + "/" + parsedFileB[1]
 		info, err := os.Stat(fullPathToB)
@@ -124,12 +125,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Println(parsedFileB[1])
-		fmt.Println(isDir)
-		fmt.Println("debugging")
-		fmt.Println(fileToParse)
 		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fileToParse, isDir) {
-			fmt.Println("dotfiles")
 			if isDir {
 				continue
 			}
@@ -143,7 +139,6 @@ func main() {
 			diffRows := strings.Split(string(raw.Body), "\n")
 			for _, row := range diffRows {
 				if strings.HasPrefix(row, "+") {
-					fmt.Println(row)
 					for _, flag := range flags.Items {
 						if strings.Contains(row, flag.Key) {
 							currentKeys := flagsAdded[flag.Key]
@@ -198,19 +193,31 @@ func main() {
 			existingCommentBody = *comment.Body
 		}
 	}
+	addedKeys := make([]string, 0, len(flagsAdded))
+	for key := range flagsAdded {
+		addedKeys = append(addedKeys, key)
+	}
+	sort.Strings(addedKeys)
 	var addedComments []string
-	for flag, aliases := range flagsAdded {
+	for _, flagKey := range addedKeys {
+		aliases := flagsAdded[flagKey]
 		// If flag is in both added and removed then it is being modified
-		delete(flagsRemoved, flag)
-		createComment, err := githubFlagComment(flags.Items, flag, aliases, ldEnvironment, ldInstance)
+		delete(flagsRemoved, flagKey)
+		createComment, err := githubFlagComment(flags.Items, flagKey, aliases, ldEnvironment, ldInstance)
 		addedComments = append(addedComments, createComment)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
+	removedKeys := make([]string, 0, len(flagsRemoved))
+	for key := range flagsRemoved {
+		removedKeys = append(removedKeys, key)
+	}
+	sort.Strings(removedKeys)
 	var removedComments []string
-	for flag, aliases := range flagsRemoved {
-		removedComment, err := githubFlagComment(flags.Items, flag, aliases, ldEnvironment, ldInstance)
+	for _, flagKey := range removedKeys {
+		aliases := flagsRemoved[flagKey]
+		removedComment, err := githubFlagComment(flags.Items, flagKey, aliases, ldEnvironment, ldInstance)
 		removedComments = append(removedComments, removedComment)
 		if err != nil {
 			fmt.Println(err)
@@ -228,7 +235,7 @@ func main() {
 	}
 	postedComments := strings.Join(commentStr, "\n")
 	hash := md5.Sum([]byte(postedComments))
-	fmt.Println(string(hash[:]))
+	fmt.Println(hex.EncodeToString(hash[:]))
 	fmt.Println(postedComments)
 	comment := github.IssueComment{
 		Body: &postedComments,
