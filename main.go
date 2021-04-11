@@ -365,14 +365,14 @@ func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string,
 *{{trim .Flag.Description}}*
 {{- end}}
 {{- if .Flag.Tags}}
-Tags: {{range $tag := .Flag.Tags }}` + `{{$tag}}` + `{{end}}
+Tags: {{range $tag := .Flag.Tags }}` + "`" + `{{$tag}}` + "`" + `{{end}}
 {{- end}}
 
 Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
 Off variation: ` + "`" + `{{(index .Flag.Variations .Environment.OffVariation).Value}}` + "`" + `
 Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
-{{- if .Aliases}}
+{{- $length := len .Aliases}}{{ if not eq $length 0 }}
 Aliases: {{ .Aliases }}
 {{- end}}
 `
