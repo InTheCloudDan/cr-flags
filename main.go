@@ -40,13 +40,7 @@ func main() {
 	}
 	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
 	repo := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
-	testBasePath := os.Getenv("INPUT_BASEPATH")
-	var basePath string
-	if len(testBasePath) == 0 {
-		basePath = "https://app.launchdarkly.com"
-	} else {
-		basePath = testBasePath
-	}
+
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
@@ -58,7 +52,7 @@ func main() {
 	}
 
 	// Query for flags
-	ldClient, err := newClient(apiToken, basePath, false)
+	ldClient, err := newClient(apiToken, ldInstance, false)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -105,7 +99,6 @@ func main() {
 
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
-	//fmt.Println(raw)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
@@ -131,12 +124,14 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
+		// Similar to ld-find-code-refs do not match dotfiles, and read in ignore files.
 		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fileToParse, isDir) {
 			if isDir {
 				continue
 			}
 			continue
 		}
+
 		// We don't want to run on renaming of files.
 		if (parsedFileA[1] != parsedFileB[1]) && (!strings.Contains(parsedFileB[1], "dev/null") && !strings.Contains(parsedFileA[1], "dev/null")) {
 			continue
@@ -327,7 +322,7 @@ func newClient(token string, apiHost string, oauth bool) (*Client, error) {
 	cfg := &ldapi.Configuration{
 		BasePath:      basePath,
 		DefaultHeader: make(map[string]string),
-		UserAgent:     fmt.Sprintf("launchdarkly-terraform-provider/0.1.0"),
+		UserAgent:     fmt.Sprintf("launchdarkly-pr-flags/0.1.0"),
 	}
 
 	cfg.AddDefaultHeader("LD-API-Version", APIVersion)
@@ -389,7 +384,7 @@ Temporary: **{{ .Flag.Temporary }}**
 {{- if .Aliases }}
 {{- if ne (len .Aliases) 0}}
 {{ len .Aliases }}
-Aliases: {{range $alias := .Aliases }}` + "`" + `{{$alias}} ` + "` -" + `{{end}}
+Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}} ` + "`" + `{{end}}
 {{- end}}
 {{- end}}
 `

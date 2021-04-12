@@ -1,6 +1,6 @@
 # action.yml
 name: 'Find Flags'
-description: 'Test find flags'
+description: 'Find LaunchDarkly Flags in your Pull Request'
 runs:
   using: 'docker'
   image: 'Dockerfile'
