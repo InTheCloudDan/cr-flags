@@ -40,7 +40,13 @@ func main() {
 	}
 	owner := os.Getenv("GITHUB_REPOSITORY_OWNER")
 	repo := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
-
+	testBasePath := os.Getenv("INPUT_BASEPATH")
+	var basePath string
+	if len(testBasePath) == 0 {
+		basePath = "https://app.launchdarkly.com"
+	} else {
+		basePath = testBasePath
+	}
 	event, err := parseEvent(os.Getenv("GITHUB_EVENT_PATH"))
 	if err != nil {
 		fmt.Printf("error parsing GitHub event payload at %q: %v", os.Getenv("GITHUB_EVENT_PATH"), err)
@@ -52,7 +58,7 @@ func main() {
 	}
 
 	// Query for flags
-	ldClient, err := newClient(apiToken, "https://app.launchdarkly.com", false)
+	ldClient, err := newClient(apiToken, basePath, false)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -236,11 +242,11 @@ func main() {
 	var commentStr []string
 	commentStr = append(commentStr, starter)
 	if len(flagsAdded) > 0 {
-		commentStr = append(commentStr, "**Added/Modified**")
+		commentStr = append(commentStr, "** **Added/Modified** **")
 		commentStr = append(commentStr, addedComments...)
 	}
 	if len(flagsRemoved) > 0 {
-		commentStr = append(commentStr, "**Removed**")
+		commentStr = append(commentStr, "** **Removed** **")
 		commentStr = append(commentStr, removedComments...)
 	}
 	postedComments := strings.Join(commentStr, "\n")
@@ -315,13 +321,9 @@ func newClient(token string, apiHost string, oauth bool) (*Client, error) {
 	if token == "" {
 		return nil, errors.New("token cannot be empty")
 	}
-	basePath := "https://app.launchdarkly.com/api/v2"
-	if apiHost != "" {
-		basePath = fmt.Sprintf("%s/api/v2", apiHost)
-	}
 
 	cfg := &ldapi.Configuration{
-		BasePath:      basePath,
+		BasePath:      apiHost,
 		DefaultHeader: make(map[string]string),
 		UserAgent:     fmt.Sprintf("launchdarkly-terraform-provider/0.1.0"),
 	}
@@ -375,7 +377,7 @@ func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string,
 *{{trim .Flag.Description}}*
 {{- end}}
 {{- if .Flag.Tags}}
-Tags: {{range $i, $tag := .Flag.Tags }}` + "`" + `{{$tag}}` + "`{{$i}}{{if $i}}, {{end}}" + `{{end}}
+Tags: {{ range $i, $e := .Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
 {{- end}}
 
 Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
