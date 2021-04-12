@@ -322,8 +322,10 @@ func newClient(token string, apiHost string, oauth bool) (*Client, error) {
 		return nil, errors.New("token cannot be empty")
 	}
 
+	basePath := fmt.Sprintf("%s/api/v2", apiHost)
+
 	cfg := &ldapi.Configuration{
-		BasePath:      apiHost,
+		BasePath:      basePath,
 		DefaultHeader: make(map[string]string),
 		UserAgent:     fmt.Sprintf("launchdarkly-terraform-provider/0.1.0"),
 	}
