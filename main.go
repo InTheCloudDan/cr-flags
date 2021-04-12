@@ -3,11 +3,14 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -49,11 +52,11 @@ func main() {
 	}
 
 	// Query for flags
-	ldClient, err := newClient(apiToken, "https://app.launchdarkly.com", false)
+	ldClient, err := newClient(apiToken, ldInstance, false)
 	if err != nil {
 		fmt.Println(err)
 	}
-	flagOpts := ldapi.GetFeatureFlagsOpts{
+	flagOpts := ldapi.FeatureFlagsApiGetFeatureFlagsOpts{
 		Env:     optional.NewInterface(ldEnvironment),
 		Summary: optional.NewBool(false),
 	}
@@ -96,7 +99,6 @@ func main() {
 
 	rawOpts := github.RawOptions{Type: github.Diff}
 	raw, _, err := prService.GetRaw(ctx, owner, repo[1], *event.PullRequest.Number, rawOpts)
-	fmt.Println(raw)
 	multiFiles, err := diff.ParseMultiFileDiff([]byte(raw))
 	flagsAdded := make(map[string][]string)
 	flagsRemoved := make(map[string][]string)
@@ -106,30 +108,32 @@ func main() {
 		// If file is being renamed we don't want to check it for flags.
 		parsedFileA := strings.SplitN(parsedDiff.OrigName, "/", 2)
 		parsedFileB := strings.SplitN(parsedDiff.NewName, "/", 2)
-		fmt.Println(parsedFileB)
 		fullPathToA := workspace + "/" + parsedFileA[1]
 		fullPathToB := workspace + "/" + parsedFileB[1]
 		info, err := os.Stat(fullPathToB)
 		var isDir bool
 		var fileToParse string
+		// If there is no 'b' parse 'a', means file is deleted.
 		if info == nil {
 			isDir = false
 			fileToParse = fullPathToA
 		} else {
 			isDir = info.IsDir()
 			fileToParse = fullPathToB
-
 		}
 		if err != nil {
 			fmt.Println(err)
 		}
+		// Similar to ld-find-code-refs do not match dotfiles, and read in ignore files.
 		if strings.HasPrefix(parsedFileB[1], ".") || allIgnores.Match(fileToParse, isDir) {
 			if isDir {
 				continue
 			}
 			continue
 		}
-		if (parsedFileA[1] != parsedFileB[1]) && !strings.Contains(parsedFileB[1], "dev/null") {
+
+		// We don't want to run on renaming of files.
+		if (parsedFileA[1] != parsedFileB[1]) && (!strings.Contains(parsedFileB[1], "dev/null") && !strings.Contains(parsedFileA[1], "dev/null")) {
 			continue
 		}
 		for _, raw := range parsedDiff.Hunks {
@@ -183,43 +187,88 @@ func main() {
 		fmt.Println(err)
 	}
 	var existingComment int64
+	var existingCommentBody string
 	for _, comment := range comments {
 		if strings.Contains(*comment.Body, "LaunchDarkly Flag Details") {
 			existingComment = int64(comment.GetID())
+			existingCommentBody = *comment.Body
 		}
 	}
-	for flag, aliases := range flagsAdded {
+	addedKeys := make([]string, 0, len(flagsAdded))
+	for key := range flagsAdded {
+		addedKeys = append(addedKeys, key)
+	}
+	// sort keys so hashing can work for checking if comment already exists
+	sort.Strings(addedKeys)
+	var addedComments []string
+	for _, flagKey := range addedKeys {
+		aliases := flagsAdded[flagKey]
 		// If flag is in both added and removed then it is being modified
-		delete(flagsRemoved, flag)
-		createComment, err := githubFlagComment(flags.Items, flag, aliases, "Added/Modified", ldEnvironment, ldInstance)
-		if err != nil {
-			fmt.Println(err)
+		delete(flagsRemoved, flagKey)
+		flagAliases := aliases[:0]
+		for _, alias := range aliases {
+			if !(len(strings.TrimSpace(alias)) == 0) {
+				flagAliases = append(flagAliases, alias)
+			}
 		}
-		if existingComment > 0 {
-			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, createComment)
-		} else {
-			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
+		createComment, err := githubFlagComment(flags.Items, flagKey, flagAliases, ldEnvironment, ldInstance)
+		if len(addedComments) > 0 {
+			addedComments = append(addedComments, "---")
 		}
+		addedComments = append(addedComments, createComment)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
-	for flag, aliases := range flagsRemoved {
+	removedKeys := make([]string, 0, len(flagsRemoved))
+	for key := range flagsRemoved {
+		removedKeys = append(removedKeys, key)
+	}
+	sort.Strings(removedKeys)
+	var removedComments []string
+	for _, flagKey := range removedKeys {
+		aliases := flagsRemoved[flagKey]
+		removedComment, err := githubFlagComment(flags.Items, flagKey, aliases, ldEnvironment, ldInstance)
+		removedComments = append(removedComments, removedComment)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	var commentStr []string
+	commentStr = append(commentStr, starter)
+	if len(flagsAdded) > 0 {
+		commentStr = append(commentStr, "** **Added/Modified** **")
+		commentStr = append(commentStr, addedComments...)
+	}
+	if len(flagsRemoved) > 0 {
+		commentStr = append(commentStr, "** **Removed** **")
+		commentStr = append(commentStr, removedComments...)
+	}
+	postedComments := strings.Join(commentStr, "\n")
 
-		createComment, err := githubFlagComment(flags.Items, flag, aliases, "Removed", ldEnvironment, ldInstance)
-		if err != nil {
-			fmt.Println(err)
-		}
-		if existingComment > 0 {
-			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, createComment)
-		} else {
-			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
-		}
-		if err != nil {
-			fmt.Println(err)
-		}
+	hash := md5.Sum([]byte(postedComments))
+	if strings.Contains(existingCommentBody, hex.EncodeToString(hash[:])) {
+		fmt.Println("comment already exists")
+		return
 	}
-	if (len(flagsAdded) == 0 && len(flagsRemoved) == 0) && !(existingComment > 0) {
+	postedComments = postedComments + "\n comment hash: " + hex.EncodeToString(hash[:])
+	comment := github.IssueComment{
+		Body: &postedComments,
+	}
+	if !(len(flagsAdded) == 0 && len(flagsRemoved) == 0) {
+		if existingComment > 0 {
+			_, _, err = issuesService.EditComment(ctx, owner, repo[1], existingComment, &comment)
+		} else {
+			_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, &comment)
+		}
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else if len(flagsAdded) == 0 && len(flagsRemoved) == 0 {
+		// Check if this is already the body, flags could have originally been included then removed in later commit
+		if strings.Contains(existingCommentBody, "No flag references found in PR") {
+			return
+		}
 		createComment := githubNoFlagComment()
 		_, _, err = issuesService.CreateComment(ctx, owner, repo[1], *event.PullRequest.Number, createComment)
 		if err != nil {
@@ -267,15 +316,13 @@ func newClient(token string, apiHost string, oauth bool) (*Client, error) {
 	if token == "" {
 		return nil, errors.New("token cannot be empty")
 	}
-	basePath := "https://app.launchdarkly.com/api/v2"
-	if apiHost != "" {
-		basePath = fmt.Sprintf("%s/api/v2", apiHost)
-	}
+
+	basePath := fmt.Sprintf("%s/api/v2", apiHost)
 
 	cfg := &ldapi.Configuration{
 		BasePath:      basePath,
 		DefaultHeader: make(map[string]string),
-		UserAgent:     fmt.Sprintf("launchdarkly-terraform-provider/0.1.0"),
+		UserAgent:     fmt.Sprintf("launchdarkly-pr-flags/0.1.0"),
 	}
 
 	cfg.AddDefaultHeader("LD-API-Version", APIVersion)
@@ -312,46 +359,50 @@ type Comment struct {
 	LDInstance  string
 }
 
-func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string, changeType string, environment string, instance string) (*github.IssueComment, error) {
+func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string, environment string, instance string) (string, error) {
 	idx, _ := find(flags, flag)
 	commentTemplate := Comment{
 		Flag:        flags[idx],
 		Aliases:     aliases,
-		ChangeType:  changeType,
 		Environment: flags[idx].Environments[environment],
 		LDInstance:  instance,
 	}
 	var commentBody bytes.Buffer
 	tmplSetup := `
-LaunchDarkly Flag Details **{{ .ChangeType }}**
 **[{{.Flag.Name}}]({{.LDInstance}}{{.Environment.Site.Href}})** ` + "`" + `{{.Flag.Key}}` + "`" + `
-*{{.Flag.Description}}*
-Tags: {{range $tag := .Flag.Tags }}_{{$tag}}_ {{end}}
+{{- if .Flag.Description}}
+*{{trim .Flag.Description}}*
+{{- end}}
+{{- if .Flag.Tags}}
+Tags: {{ range $i, $e := .Flag.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
+{{- end}}
 
 Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
 Off variation: ` + "`" + `{{(index .Flag.Variations .Environment.OffVariation).Value}}` + "`" + `
 Kind: **{{ .Flag.Kind }}**
 Temporary: **{{ .Flag.Temporary }}**
-Aliases: {{ .Aliases }}
+{{- if .Aliases }}
+{{- if ne (len .Aliases) 0}}
+{{ len .Aliases }}
+Aliases: {{range $i, $e := .Aliases }}` + "{{if $i}}, {{end}}`" + `{{$e}} ` + "`" + `{{end}}
+{{- end}}
+{{- end}}
 `
-	tmpl, err := template.New("comment").Parse(tmplSetup)
+	tmpl := template.Must(template.New("comment").Funcs(template.FuncMap{"trim": strings.TrimSpace}).Parse(tmplSetup))
+	err := tmpl.Execute(&commentBody, commentTemplate)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	err = tmpl.Execute(&commentBody, commentTemplate)
-	commentStr := commentBody.String()
-	fmt.Println(commentStr)
-	comment := github.IssueComment{
-		Body: &commentStr,
-	}
-	return &comment, nil
+	return commentBody.String(), nil
 }
 
 func githubNoFlagComment() *github.IssueComment {
 	commentStr := `
-LaunchDarkly Flag Details: **No flag references found in PR**`
+ **No flag references found in PR**`
 	comment := github.IssueComment{
 		Body: &commentStr,
 	}
 	return &comment
 }
+
+const starter = "LaunchDarkly Flag Details:"
