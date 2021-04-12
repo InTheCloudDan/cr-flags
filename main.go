@@ -379,7 +379,7 @@ func githubFlagComment(flags []ldapi.FeatureFlag, flag string, aliases []string,
 *{{trim .Flag.Description}}*
 {{- end}}
 {{- if .Flag.Tags}}
-Tags: {{ range $i, $e := .Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
+Tags: {{ range $i, $e := .Flags.Tags }}` + "{{if $i}}, {{end}}`" + `{{$e}}` + "`" + `{{end}}
 {{- end}}
 
 Default variation: ` + "`" + `{{(index .Flag.Variations .Environment.Fallthrough_.Variation).Value}}` + "`" + `
